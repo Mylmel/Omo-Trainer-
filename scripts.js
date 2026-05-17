@@ -1,4 +1,4 @@
-// scripts.js — Omoki v0.0.1a — с кнопкой Leaking (1% разрешения)
+// scripts.js — Omoki v0.20 — с trainer.js, исправления багов
 (function() {
   // ---------- СОСТОЯНИЕ ----------
   let currentVolume = 0;
@@ -114,6 +114,9 @@
     localStorage.setItem('omoki_lang', lang);
     updateUITexts();
     updateUI();
+    // Останавливаем и перезапускаем таймер при смене языка
+    stopTimer();
+    ensureTimerRunning();
     const profile = JSON.parse(localStorage.getItem('omoki_profile') || '{}');
     profile.lang = lang;
     localStorage.setItem('omoki_profile', JSON.stringify(profile));
@@ -162,17 +165,17 @@
   function ensureTimerRunning() {
     if (timerId) return;
     if (pendingMl > 0) {
-      timerId = setInterval(() => processTick(), 3900);
+      timerId = setInterval(() => processTick(), 3800);
     }
   }
 
   function drinkAction() {
     let rawAmount = parseInt(drinkSlider.value, 10);
     if (isNaN(rawAmount)) rawAmount = 100;
-    let chosenMl = Math.min(1000, Math.max(10, rawAmount));
+    let chosenMl = Math.floor(Math.min(1000, Math.max(10, rawAmount)));
     if (chosenMl <= 0) return;
 
-    pendingMl += chosenMl;
+    pendingMl = Math.floor(pendingMl + chosenMl);
     ensureTimerRunning();
     updateUI();
     statusMsgSpan.innerHTML = getT('drinkFeedback', { amount: chosenMl });
@@ -183,7 +186,8 @@
     statusMsgSpan.innerHTML = getT('askWait');
     setTimeout(() => {
       if (currentVolume > maxVolume * 0.9) {
-        statusMsgSpan.innerHTML = getT('askDenied');
+        const denialPhrase = getRandomTrainerPhrase(currentLang, userName);
+        statusMsgSpan.innerHTML = denialPhrase;
       } else {
         statusMsgSpan.innerHTML = getT('askGranted');
       }
@@ -210,12 +214,10 @@
     setTimeout(() => updateUI(), 3000);
   }
 
-  // Новая функция для кнопки Leaking (1% шанс)
   function leakingAction() {
-    const chance = Math.random() * 100; // 0..100
-    if (chance < 1) { // 1% шанс
+    const chance = Math.random() * 100;
+    if (chance < 1) {
       statusMsgSpan.innerHTML = getT('leakingGranted');
-      // разрешаем опорожнение
       stopTimer();
       currentVolume = 0;
       pendingMl = 0;
@@ -249,7 +251,9 @@
     stopTimer();
     updateUI();
     const profile = { userName, maxVolume, lang: currentLang };
-    localStorage.setItem('omoki_profile', JSON.stringify(profile));
+    try {
+      localStorage.setItem('omoki_profile', JSON.stringify(profile));
+    } catch(e) { console.warn("LocalStorage save failed", e); }
     profileScreen.classList.remove('active');
     mainScreen.classList.add('active');
     updateUI();

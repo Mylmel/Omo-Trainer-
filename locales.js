@@ -1,4 +1,4 @@
-// locales.js — 10 языков, поддержка кнопки Leaking
+// locales.js — 10 языков, удалены смайлики
 const translations = {
   en: {
     appTitle: "Omo Trainer",
@@ -24,8 +24,8 @@ const translations = {
       overflow: "OVERFILLED! FIND TOILET NOW!",
       urgent: "Emergency soon! Need toilet immediately!",
       hard: "Already heavy. Can't estimate time to emergency.",
-      moderate: "Can't estimate time to potty emergency. Drink more :)",
-      calm: "All calm. Drink more!"
+      moderate: "Can't estimate time to potty emergency. Drink more.",
+      calm: "All calm. Drink more."
     },
     drinkFeedback: "+{amount} ml added to queue. Filling in progress...",
     askWait: "Asking for permission... Waiting...",
@@ -59,8 +59,8 @@ const translations = {
       overflow: "ПЕРЕПОЛНЕНО! СРОЧНО ИЩИТЕ ТУАЛЕТ!",
       urgent: "Скоро авария! Туалет нужен немедленно!",
       hard: "Уже тяжело. Не могу оценить время до экстренной ситуации.",
-      moderate: "Не могу оценить время до туалетной аварии. Пейте больше :)",
-      calm: "Всё спокойно. Пейте больше!"
+      moderate: "Не могу оценить время до туалетной аварии. Пейте больше.",
+      calm: "Всё спокойно. Пейте больше."
     },
     drinkFeedback: "+{amount} мл добавлено в очередь. Наполнение идёт...",
     askWait: "Прошу разрешения... Жду...",
@@ -94,8 +94,8 @@ const translations = {
       overflow: "ÜBERFÜLLT! SOFORT TOILETTE FINDEN!",
       urgent: "Notfall bald! Toilette sofort nötig!",
       hard: "Bereits schwer. Zeit bis zum Notfall nicht schätzbar.",
-      moderate: "Kann Zeit bis zum Notfall nicht schätzen. Trinken Sie mehr :)",
-      calm: "Alles ruhig. Trinken Sie mehr!"
+      moderate: "Kann Zeit bis zum Notfall nicht schätzen. Trinken Sie mehr.",
+      calm: "Alles ruhig. Trinken Sie mehr."
     },
     drinkFeedback: "+{amount} ml zur Warteschlange hinzugefügt. Füllung läuft...",
     askWait: "Um Erlaubnis bitten... Warten...",
@@ -129,8 +129,8 @@ const translations = {
       overflow: "TROP PLEIN! TROUVER DES TOILETTES!",
       urgent: "Urgence bientôt! Toilettes nécessaires immédiatement!",
       hard: "Déjà lourd. Impossible d'estimer l'heure de l'urgence.",
-      moderate: "Impossible d'estimer l'heure de l'urgence. Buvez plus :)",
-      calm: "Tout est calme. Buvez plus!"
+      moderate: "Impossible d'estimer l'heure de l'urgence. Buvez plus.",
+      calm: "Tout est calme. Buvez plus."
     },
     drinkFeedback: "+{amount} ml ajoutés à la file d'attente. Remplissage en cours...",
     askWait: "Demande de permission... Attente...",
@@ -164,8 +164,8 @@ const translations = {
       overflow: "¡DEMASIADO LLENO! ¡ENCUENTRA UN BAÑO AHORA!",
       urgent: "¡Emergencia pronto! ¡Baño necesario inmediatamente!",
       hard: "Ya pesado. No puedo estimar el tiempo de emergencia.",
-      moderate: "No puedo estimar el tiempo de emergencia. Bebe más :)",
-      calm: "Todo tranquilo. Bebe más!"
+      moderate: "No puedo estimar el tiempo de emergencia. Bebe más.",
+      calm: "Todo tranquilo. Bebe más."
     },
     drinkFeedback: "+{amount} ml añadidos a la cola. Llenando...",
     askWait: "Pidiendo permiso... Esperando...",
@@ -199,8 +199,8 @@ const translations = {
       overflow: "TROPPO PIENO! TROVA UN BAGNO SUBITO!",
       urgent: "Emergenza imminente! Bagno necessario subito!",
       hard: "Già pesante. Impossibile stimare il tempo all'emergenza.",
-      moderate: "Impossibile stimare il tempo all'emergenza. Bevi di più :)",
-      calm: "Tutto tranquillo. Bevi di più!"
+      moderate: "Impossibile stimare il tempo all'emergenza. Bevi di più.",
+      calm: "Tutto tranquillo. Bevi di più."
     },
     drinkFeedback: "+{amount} ml aggiunti alla coda. Riempimento in corso...",
     askWait: "Chiedendo il permesso... In attesa...",
@@ -234,7 +234,7 @@ const translations = {
       overflow: "过满！立刻找厕所！",
       urgent: "紧急情况即将发生！需要立刻上厕所！",
       hard: "已经很重了。无法估计紧急时间。",
-      moderate: "无法估计紧急时间。多喝水 :)",
+      moderate: "无法估计紧急时间。多喝水。",
       calm: "一切平静。多喝水！"
     },
     drinkFeedback: "+{amount} 毫升已加入队列。正在填充...",
@@ -269,7 +269,7 @@ const translations = {
       overflow: "過充填！すぐにトイレを見つけて！",
       urgent: "緊急事態が近い！すぐにトイレが必要！",
       hard: "もう重い。緊急事態までの時間を推定できない。",
-      moderate: "緊急事態までの時間を推定できない。もっと飲んでください :)",
+      moderate: "緊急事態までの時間を推定できない。もっと飲んでください。",
       calm: "すべて穏やか。もっと飲んでください！"
     },
     drinkFeedback: "+{amount} ml をキューに追加しました。充填中...",
@@ -304,7 +304,7 @@ const translations = {
       overflow: "과충전됨! 지금 화장실 찾아!",
       urgent: "곧 비상 사태! 즉시 화장실 필요!",
       hard: "이미 무거움. 비상 시간 추정 불가.",
-      moderate: "비상 시간 추정 불가. 더 마셔주세요 :)",
+      moderate: "비상 시간 추정 불가. 더 마셔주세요.",
       calm: "모든 것이 평온함. 더 마셔주세요!"
     },
     drinkFeedback: "+{amount} ml 대기열에 추가됨. 채우는 중...",
@@ -339,7 +339,7 @@ const translations = {
       overflow: "AŞIRI DOLDU! HEMEN TUvalet BUL!",
       urgent: "Acil durum yakında! Hemen tuvalet gerekli!",
       hard: "Zaten ağır. Acil durum süresi tahmin edilemiyor.",
-      moderate: "Acil durum süresi tahmin edilemiyor. Daha fazla iç :)",
+      moderate: "Acil durum süresi tahmin edilemiyor. Daha fazla iç.",
       calm: "Her şey sakin. Daha fazla iç!"
     },
     drinkFeedback: "+{amount} ml kuyruğa eklendi. Doldurma devam ediyor...",
