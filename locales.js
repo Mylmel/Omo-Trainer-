@@ -1,4 +1,4 @@
-// locales.js — 10 языков, удалены смайлики
+// locales.js — 10 языков, исправлено
 const translations = {
   en: {
     appTitle: "Omo Trainer",
@@ -19,6 +19,9 @@ const translations = {
     leakingBtn: "LEAKING",
     leakingGranted: "Trainer allowed you to go! Emptying...",
     leakingDenied: "Trainer denied. Hold it!",
+    languageLabel: "Language",
+    themeLabel: "Theme",
+    peeWithoutPermission: "You don't have permission! Ask for permission first.",
     status: {
       critical: "CRITICAL OVERFILL! CAN'T HOLD!",
       overflow: "OVERFILLED! FIND TOILET NOW!",
@@ -30,7 +33,7 @@ const translations = {
     drinkFeedback: "+{amount} ml added to queue. Filling in progress...",
     askWait: "Asking for permission... Waiting...",
     askDenied: "Permission denied! Hold it further...",
-    askGranted: "Permission granted, but you still hold!",
+    askGranted: "Permission granted, you may go to the toilet now!",
     peeDone: "EMPTIED! Bladder is empty. Rest.",
     cantHoldMsg: "COULDN'T HOLD! Spilled {amount} ml... Shame and relief.",
     resetMsg: "Progress reset. Clean state."
@@ -54,6 +57,9 @@ const translations = {
     leakingBtn: "ПОДТЕКАНИЕ",
     leakingGranted: "Тренер разрешил сходить! Опорожнение...",
     leakingDenied: "Тренер отказал. Терпи!",
+    languageLabel: "Язык",
+    themeLabel: "Тема",
+    peeWithoutPermission: "Нет разрешения! Сначала попросите разрешение.",
     status: {
       critical: "КРИТИЧЕСКОЕ ПЕРЕПОЛНЕНИЕ! НЕ МОГУ ТЕРПЕТЬ!",
       overflow: "ПЕРЕПОЛНЕНО! СРОЧНО ИЩИТЕ ТУАЛЕТ!",
@@ -65,7 +71,7 @@ const translations = {
     drinkFeedback: "+{amount} мл добавлено в очередь. Наполнение идёт...",
     askWait: "Прошу разрешения... Жду...",
     askDenied: "Разрешения нет! Терпи дальше...",
-    askGranted: "Разрешение получено, но вы ещё держитесь!",
+    askGranted: "Разрешение получено, можете идти в туалет!",
     peeDone: "ОПОРОЖНЕНИЕ! Мочевой пуст. Отдых.",
     cantHoldMsg: "НЕ УДЕРЖАЛ! ПРОЛИВ {amount} мл... Стыд и облегчение.",
     resetMsg: "Прогресс сброшен. Чистое состояние."
@@ -89,6 +95,9 @@ const translations = {
     leakingBtn: "AUSLAUFEN",
     leakingGranted: "Trainer erlaubt dir zu gehen! Entleeren...",
     leakingDenied: "Trainer verweigert. Halt durch!",
+    languageLabel: "Sprache",
+    themeLabel: "Thema",
+    peeWithoutPermission: "Keine Erlaubnis! Bitte zuerst um Erlaubnis fragen.",
     status: {
       critical: "KRITISCHE ÜBERFÜLLUNG! KANN NICHT HALTEN!",
       overflow: "ÜBERFÜLLT! SOFORT TOILETTE FINDEN!",
@@ -100,7 +109,7 @@ const translations = {
     drinkFeedback: "+{amount} ml zur Warteschlange hinzugefügt. Füllung läuft...",
     askWait: "Um Erlaubnis bitten... Warten...",
     askDenied: "Erlaubnis verweigert! Halten Sie weiter...",
-    askGranted: "Erlaubnis erteilt, aber Sie halten noch!",
+    askGranted: "Erlaubnis erteilt, Sie können jetzt zur Toilette gehen!",
     peeDone: "ENTLEERT! Blase ist leer. Ruhe.",
     cantHoldMsg: "KONNTE NICHT HALTEN! {amount} ml verloren... Scham und Erleichterung.",
     resetMsg: "Fortschritt zurückgesetzt. Sauberer Zustand."
@@ -124,6 +133,9 @@ const translations = {
     leakingBtn: "FUITE",
     leakingGranted: "L'entraîneur vous a autorisé à y aller! Vidange...",
     leakingDenied: "L'entraîneur a refusé. Tenez bon!",
+    languageLabel: "Langue",
+    themeLabel: "Thème",
+    peeWithoutPermission: "Pas de permission! Demandez d'abord la permission.",
     status: {
       critical: "REMPLISSAGE CRITIQUE! JE NE PEUX PAS TENIR!",
       overflow: "TROP PLEIN! TROUVER DES TOILETTES!",
@@ -135,7 +147,7 @@ const translations = {
     drinkFeedback: "+{amount} ml ajoutés à la file d'attente. Remplissage en cours...",
     askWait: "Demande de permission... Attente...",
     askDenied: "Permission refusée! Tenez bon...",
-    askGranted: "Permission accordée, mais vous tenez toujours!",
+    askGranted: "Permission accordée, vous pouvez aller aux toilettes maintenant!",
     peeDone: "VIDÉ! Vessie vide. Repos.",
     cantHoldMsg: "JE N'AI PAS PU TENIR! Perte de {amount} ml... Honte et soulagement.",
     resetMsg: "Progression réinitialisée. État propre."
@@ -159,6 +171,9 @@ const translations = {
     leakingBtn: "ESCAPE",
     leakingGranted: "¡El entrenador te permitió ir! Vaciando...",
     leakingDenied: "Entrenador denegado. ¡Aguanta!",
+    languageLabel: "Idioma",
+    themeLabel: "Tema",
+    peeWithoutPermission: "¡No tienes permiso! Pide permiso primero.",
     status: {
       critical: "¡REBOSAMIENTO CRÍTICO! ¡NO PUEDO AGUANTAR!",
       overflow: "¡DEMASIADO LLENO! ¡ENCUENTRA UN BAÑO AHORA!",
@@ -170,7 +185,7 @@ const translations = {
     drinkFeedback: "+{amount} ml añadidos a la cola. Llenando...",
     askWait: "Pidiendo permiso... Esperando...",
     askDenied: "¡Permiso denegado! Aguanta más...",
-    askGranted: "Permiso concedido, ¡pero aún aguantas!",
+    askGranted: "Permiso concedido, ¡puedes ir al baño ahora!",
     peeDone: "¡VACIADO! Vejiga vacía. Descanso.",
     cantHoldMsg: "¡NO PUDE AGUANTAR! Derramé {amount} ml... Vergüenza y alivio.",
     resetMsg: "Progreso reiniciado. Estado limpio."
@@ -194,6 +209,9 @@ const translations = {
     leakingBtn: "PERDITA",
     leakingGranted: "L'allenatore ti ha permesso di andare! Svuotamento...",
     leakingDenied: "Allenatore negato. Resisti!",
+    languageLabel: "Lingua",
+    themeLabel: "Tema",
+    peeWithoutPermission: "Non hai il permesso! Chiedi prima il permesso.",
     status: {
       critical: "STRAPIENO CRITICO! NON RESISTO!",
       overflow: "TROPPO PIENO! TROVA UN BAGNO SUBITO!",
@@ -205,7 +223,7 @@ const translations = {
     drinkFeedback: "+{amount} ml aggiunti alla coda. Riempimento in corso...",
     askWait: "Chiedendo il permesso... In attesa...",
     askDenied: "Permesso negato! Resisti ancora...",
-    askGranted: "Permesso concesso, ma resisti ancora!",
+    askGranted: "Permesso concesso, puoi andare in bagno ora!",
     peeDone: "SVUOTATO! Vescica vuota. Riposo.",
     cantHoldMsg: "NON HO RESISTITO! Perdita di {amount} ml... Vergogna e sollievo.",
     resetMsg: "Progresso resettato. Stato pulito."
@@ -229,6 +247,9 @@ const translations = {
     leakingBtn: "渗漏",
     leakingGranted: "教练允许你去！排空中...",
     leakingDenied: "教练拒绝了。忍住！",
+    languageLabel: "语言",
+    themeLabel: "主题",
+    peeWithoutPermission: "你没有许可！请先请求许可。",
     status: {
       critical: "严重过满！忍不住了！",
       overflow: "过满！立刻找厕所！",
@@ -240,7 +261,7 @@ const translations = {
     drinkFeedback: "+{amount} 毫升已加入队列。正在填充...",
     askWait: "正在请求允许... 等待...",
     askDenied: "请求被拒绝！继续忍着...",
-    askGranted: "请求被允许，但你还在忍！",
+    askGranted: "请求被允许，你现在可以去厕所了！",
     peeDone: "已排空！膀胱空了。休息。",
     cantHoldMsg: "忍不住了！漏了 {amount} 毫升... 羞愧又解脱。",
     resetMsg: "进度已重置。干净状态。"
@@ -264,6 +285,9 @@ const translations = {
     leakingBtn: "漏れ",
     leakingGranted: "トレーナーが行くことを許可しました！排出中...",
     leakingDenied: "トレーナーは拒否しました。我慢してください！",
+    languageLabel: "言語",
+    themeLabel: "テーマ",
+    peeWithoutPermission: "許可がありません！まず許可を求めてください。",
     status: {
       critical: "危険な過充填！もう我慢できない！",
       overflow: "過充填！すぐにトイレを見つけて！",
@@ -275,7 +299,7 @@ const translations = {
     drinkFeedback: "+{amount} ml をキューに追加しました。充填中...",
     askWait: "許可を求めています... 待っています...",
     askDenied: "許可されません！まだ我慢してください...",
-    askGranted: "許可されましたが、まだ我慢しています！",
+    askGranted: "許可されました。今トイレに行けます！",
     peeDone: "空にしました！膀胱は空です。休息。",
     cantHoldMsg: "我慢できなかった！{amount} ml 漏らした... 恥と安堵。",
     resetMsg: "進捗をリセットしました。クリーンな状態。"
@@ -299,6 +323,9 @@ const translations = {
     leakingBtn: "새는 중",
     leakingGranted: "트레이너가 가도록 허락했습니다! 비우는 중...",
     leakingDenied: "트레이너가 거부했습니다. 참으세요!",
+    languageLabel: "언어",
+    themeLabel: "테마",
+    peeWithoutPermission: "허가가 없습니다! 먼저 허가를 요청하세요.",
     status: {
       critical: "심각한 과충전! 참을 수 없어!",
       overflow: "과충전됨! 지금 화장실 찾아!",
@@ -310,7 +337,7 @@ const translations = {
     drinkFeedback: "+{amount} ml 대기열에 추가됨. 채우는 중...",
     askWait: "허가 요청 중... 대기 중...",
     askDenied: "허가 거부됨! 계속 참으세요...",
-    askGranted: "허가됨, 하지만 아직 참고 있어요!",
+    askGranted: "허가됨! 지금 화장실에 가도 됩니다.",
     peeDone: "비움! 방광이 비었습니다. 휴식.",
     cantHoldMsg: "참지 못했어! {amount} ml 쏟음... 부끄럽고 안도감.",
     resetMsg: "진행 상황 초기화됨. 깨끗한 상태."
@@ -334,6 +361,9 @@ const translations = {
     leakingBtn: "SIZINTI",
     leakingGranted: "Eğitmen gitmene izin verdi! Boşaltılıyor...",
     leakingDenied: "Eğitmen reddetti. Tut!",
+    languageLabel: "Dil",
+    themeLabel: "Tema",
+    peeWithoutPermission: "İznin yok! Önce izin iste.",
     status: {
       critical: "KRİTİK DOLULUK! TUTAMAM!",
       overflow: "AŞIRI DOLDU! HEMEN TUvalet BUL!",
@@ -345,7 +375,7 @@ const translations = {
     drinkFeedback: "+{amount} ml kuyruğa eklendi. Doldurma devam ediyor...",
     askWait: "İzin isteniyor... Bekleniyor...",
     askDenied: "İzin reddedildi! Daha fazla tut...",
-    askGranted: "İzin verildi, ama hala tutuyorsun!",
+    askGranted: "İzin verildi, şimdi tuvalete gidebilirsin!",
     peeDone: "BOŞALTILDI! Mesane boş. Dinlen.",
     cantHoldMsg: "TUTAMADI! {amount} ml döküldü... Utanç ve rahatlama.",
     resetMsg: "İlerleme sıfırlandı. Temiz durum."

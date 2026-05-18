@@ -1,4 +1,4 @@
-// scripts.js — Omoki v0.20 — с trainer.js, исправления багов
+// scripts.js — Omo Trainer v0.21 — с механикой разрешения
 (function() {
   // ---------- СОСТОЯНИЕ ----------
   let currentVolume = 0;
@@ -8,6 +8,7 @@
   let userName = "Player";
   let currentLang = "en";
   let isDarkTheme = false;
+  let permissionGranted = false;   // флаг разрешения на туалет
 
   // DOM-элементы
   const profileScreen = document.getElementById('profileScreen');
@@ -69,6 +70,7 @@
   }
 
   function updateUITexts() {
+    // Общие тексты
     document.getElementById('profileTitle').innerText = getT('profileTitle');
     document.getElementById('nameLabel').innerText = getT('nameLabel');
     document.getElementById('maxVolumeLabel').innerText = getT('maxVolumeLabel');
@@ -86,6 +88,10 @@
     const themeText = getT('themeToggle');
     if (themeToggleBtn) themeToggleBtn.innerText = themeText;
     if (themeToggleBtnMain) themeToggleBtnMain.innerText = themeText;
+
+    // Лейблы языка и темы
+    document.querySelectorAll('.lang-label').forEach(el => el.innerText = getT('languageLabel'));
+    document.querySelectorAll('.theme-label').forEach(el => el.innerText = getT('themeLabel'));
   }
 
   function populateLanguageSelectors() {
@@ -112,14 +118,16 @@
     if (!translations[lang]) return;
     currentLang = lang;
     localStorage.setItem('omoki_lang', lang);
-    updateUITexts();
-    updateUI();
-    // Останавливаем и перезапускаем таймер при смене языка
-    stopTimer();
-    ensureTimerRunning();
+    // Обновляем язык в сохранённом профиле (если есть)
     const profile = JSON.parse(localStorage.getItem('omoki_profile') || '{}');
     profile.lang = lang;
     localStorage.setItem('omoki_profile', JSON.stringify(profile));
+    
+    updateUITexts();
+    updateUI();
+    stopTimer();
+    ensureTimerRunning();
+    
     langSelectProfile.value = lang;
     langSelectMain.value = lang;
   }
@@ -185,20 +193,29 @@
   function askPermission() {
     statusMsgSpan.innerHTML = getT('askWait');
     setTimeout(() => {
+      // Отказ, если объём выше 90% от максимума
       if (currentVolume > maxVolume * 0.9) {
         const denialPhrase = getRandomTrainerPhrase(currentLang, userName);
         statusMsgSpan.innerHTML = denialPhrase;
+        permissionGranted = false;
       } else {
         statusMsgSpan.innerHTML = getT('askGranted');
+        permissionGranted = true;
       }
       setTimeout(() => updateUI(), 2000);
     }, 1500);
   }
 
   function peeAction() {
+    if (!permissionGranted) {
+      statusMsgSpan.innerHTML = getT('peeWithoutPermission');
+      setTimeout(() => updateUI(), 2000);
+      return;
+    }
     stopTimer();
     currentVolume = 0;
     pendingMl = 0;
+    permissionGranted = false;
     updateUI();
     statusMsgSpan.innerHTML = getT('peeDone');
     setTimeout(() => updateUI(), 2000);
@@ -209,6 +226,7 @@
     let lostVolume = currentVolume;
     currentVolume = 0;
     pendingMl = 0;
+    permissionGranted = false;
     updateUI();
     statusMsgSpan.innerHTML = getT('cantHoldMsg', { amount: Math.floor(lostVolume) });
     setTimeout(() => updateUI(), 3000);
@@ -217,10 +235,12 @@
   function leakingAction() {
     const chance = Math.random() * 100;
     if (chance < 1) {
+      // Удачное подтекание – тренер разрешает (экстренное опорожнение)
       statusMsgSpan.innerHTML = getT('leakingGranted');
       stopTimer();
       currentVolume = 0;
       pendingMl = 0;
+      permissionGranted = false;
       updateUI();
       setTimeout(() => updateUI(), 2000);
     } else {
@@ -233,6 +253,7 @@
     stopTimer();
     currentVolume = 0;
     pendingMl = 0;
+    permissionGranted = false;
     updateUI();
     statusMsgSpan.innerHTML = getT('resetMsg');
     setTimeout(() => updateUI(), 1500);
@@ -248,6 +269,7 @@
     maxVolume = newMax;
     currentVolume = 0;
     pendingMl = 0;
+    permissionGranted = false;
     stopTimer();
     updateUI();
     const profile = { userName, maxVolume, lang: currentLang };
@@ -270,6 +292,7 @@
           if (data.lang && translations[data.lang]) currentLang = data.lang;
           currentVolume = 0;
           pendingMl = 0;
+          permissionGranted = false;
           stopTimer();
           return true;
         }
@@ -280,6 +303,7 @@
 
   function editProfile() {
     stopTimer();
+    permissionGranted = false;
     profileNameInput.value = userName;
     profileMaxInput.value = maxVolume;
     profileScreen.classList.add('active');
@@ -290,6 +314,13 @@
   function updateSliderLabel() {
     let val = parseInt(drinkSlider.value, 10);
     drinkAmountSpan.innerText = val;
+  }
+
+  // Обновление UI после загрузки языка из профиля
+  function refreshLanguageFromProfile() {
+    updateUITexts();
+    langSelectProfile.value = currentLang;
+    langSelectMain.value = currentLang;
   }
 
   // ---------- ИНИЦИАЛИЗАЦИЯ ----------
@@ -318,6 +349,8 @@
 
     const hasProfile = loadSavedProfile();
     if (hasProfile) {
+      // Применяем загруженный язык к интерфейсу
+      refreshLanguageFromProfile();
       profileScreen.classList.remove('active');
       mainScreen.classList.add('active');
       updateUI();
@@ -326,6 +359,7 @@
       maxVolume = 500;
       currentVolume = 0;
       pendingMl = 0;
+      permissionGranted = false;
       profileNameInput.value = "";
       profileMaxInput.value = 500;
       profileScreen.classList.add('active');
