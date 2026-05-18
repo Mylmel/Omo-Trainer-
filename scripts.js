@@ -1,5 +1,9 @@
-// scripts.js — Omo Trainer v0.21 — с механикой разрешения
+// scripts.js — Omo Trainer v0.31 — шаг ползунка 10 мл, интервал в мс
 (function() {
+  // ---------- КОНСТАНТЫ ----------
+  const MIN_INTERVAL_MS = 100;    // минимальное значение интервала (мс)
+  const MAX_INTERVAL_MS = 60000;  // максимальное значение интервала (мс)
+  
   // ---------- СОСТОЯНИЕ ----------
   let currentVolume = 0;
   let maxVolume = 500;
@@ -8,11 +12,14 @@
   let userName = "Player";
   let currentLang = "en";
   let isDarkTheme = false;
-  let permissionGranted = false;   // флаг разрешения на туалет
+  let permissionGranted = false;
+  let fillIntervalMs = 3800;   // миллисекунд на 1 мл
 
   // DOM-элементы
   const profileScreen = document.getElementById('profileScreen');
   const mainScreen = document.getElementById('mainScreen');
+  const settingsScreen = document.getElementById('settingsScreen');
+  
   const profileNameInput = document.getElementById('profileName');
   const profileMaxInput = document.getElementById('profileMaxVolume');
   const saveProfileBtn = document.getElementById('saveProfileBtn');
@@ -28,37 +35,75 @@
   const cantHoldBtn = document.getElementById('cantHoldBtn');
   const resetProgressBtn = document.getElementById('resetProgressBtn');
   const editProfileBtn = document.getElementById('editProfileBtn');
-  const langSelectProfile = document.getElementById('langSelectProfile');
-  const langSelectMain = document.getElementById('langSelectMain');
-  const themeToggleBtn = document.getElementById('themeToggleBtn');
-  const themeToggleBtnMain = document.getElementById('themeToggleBtnMain');
+  const settingsBtn = document.getElementById('settingsBtn');
   const leakingBtn = document.getElementById('leakingBtn');
-
+  
+  // Элементы настроек
+  const settingsLangSelect = document.getElementById('settingsLangSelect');
+  const settingsThemeSelect = document.getElementById('settingsThemeSelect');
+  const settingsIntervalInput = document.getElementById('settingsIntervalInput');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  
   // ---------- ФУНКЦИИ ТЕМЫ ----------
   function applyTheme() {
     if (isDarkTheme) {
       document.body.classList.add('dark');
+      if (settingsThemeSelect) settingsThemeSelect.value = 'dark';
     } else {
       document.body.classList.remove('dark');
+      if (settingsThemeSelect) settingsThemeSelect.value = 'light';
     }
     localStorage.setItem('omoki_theme', isDarkTheme ? 'dark' : 'light');
   }
 
-  function toggleTheme() {
-    isDarkTheme = !isDarkTheme;
+  function setThemeFromSelect(value) {
+    isDarkTheme = (value === 'dark');
     applyTheme();
   }
 
   function loadTheme() {
     const saved = localStorage.getItem('omoki_theme');
-    if (saved === 'dark') {
-      isDarkTheme = true;
-    } else {
-      isDarkTheme = false;
-    }
+    isDarkTheme = (saved === 'dark');
     applyTheme();
   }
-
+  
+  // ---------- ИНТЕРВАЛ НАПОЛНЕНИЯ ----------
+  function restartTimer() {
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+    if (pendingMl > 0) {
+      timerId = setInterval(() => processTick(), fillIntervalMs);
+    }
+  }
+  
+  function setFillInterval(ms) {
+    let newMs = Math.min(MAX_INTERVAL_MS, Math.max(MIN_INTERVAL_MS, ms));
+    if (fillIntervalMs === newMs) return;
+    fillIntervalMs = newMs;
+    localStorage.setItem('omoki_fill_interval_ms', fillIntervalMs);
+    if (settingsIntervalInput) settingsIntervalInput.value = fillIntervalMs;
+    restartTimer();
+  }
+  
+  function loadFillInterval() {
+    const saved = localStorage.getItem('omoki_fill_interval_ms');
+    if (saved && !isNaN(parseInt(saved))) {
+      fillIntervalMs = Math.min(MAX_INTERVAL_MS, Math.max(MIN_INTERVAL_MS, parseInt(saved)));
+    } else {
+      fillIntervalMs = 3800;
+    }
+    if (settingsIntervalInput) settingsIntervalInput.value = fillIntervalMs;
+  }
+  
+  function onIntervalInputChange() {
+    if (!settingsIntervalInput) return;
+    let raw = parseInt(settingsIntervalInput.value, 10);
+    if (isNaN(raw)) raw = fillIntervalMs;
+    setFillInterval(raw);
+  }
+  
   // ---------- ЯЗЫК ----------
   function getT(key, placeholders = {}) {
     let t = translations[currentLang];
@@ -68,32 +113,7 @@
     }
     return str;
   }
-
-  function updateUITexts() {
-    // Общие тексты
-    document.getElementById('profileTitle').innerText = getT('profileTitle');
-    document.getElementById('nameLabel').innerText = getT('nameLabel');
-    document.getElementById('maxVolumeLabel').innerText = getT('maxVolumeLabel');
-    saveProfileBtn.innerText = getT('saveBtn');
-    document.getElementById('profileNote').innerText = getT('profileNote');
-    document.getElementById('bladderTitle').innerText = getT('bladderTitle');
-    document.getElementById('drinkLabel').innerText = getT('drinkLabel');
-    drinkBtn.innerText = getT('drinkBtn');
-    askPermissionBtn.innerText = getT('askBtn');
-    peeBtn.innerText = getT('peeBtn');
-    cantHoldBtn.innerText = getT('cantBtn');
-    resetProgressBtn.innerText = getT('resetBtn');
-    editProfileBtn.innerText = getT('editBtn');
-    if (leakingBtn) leakingBtn.innerText = getT('leakingBtn');
-    const themeText = getT('themeToggle');
-    if (themeToggleBtn) themeToggleBtn.innerText = themeText;
-    if (themeToggleBtnMain) themeToggleBtnMain.innerText = themeText;
-
-    // Лейблы языка и темы
-    document.querySelectorAll('.lang-label').forEach(el => el.innerText = getT('languageLabel'));
-    document.querySelectorAll('.theme-label').forEach(el => el.innerText = getT('themeLabel'));
-  }
-
+  
   function populateLanguageSelectors() {
     const languages = [
       { code: 'en', name: 'English' },
@@ -108,30 +128,70 @@
       { code: 'tr', name: 'Türkçe' }
     ];
     const options = languages.map(l => `<option value="${l.code}">${l.name}</option>`).join('');
-    langSelectProfile.innerHTML = options;
-    langSelectMain.innerHTML = options;
-    langSelectProfile.value = currentLang;
-    langSelectMain.value = currentLang;
+    if (settingsLangSelect) settingsLangSelect.innerHTML = options;
   }
-
+  
+  function updateUITexts() {
+    // Главный экран
+    const bladderTitle = document.getElementById('bladderTitle');
+    if (bladderTitle) bladderTitle.innerText = getT('bladderTitle');
+    const drinkLabel = document.getElementById('drinkLabel');
+    if (drinkLabel) drinkLabel.innerText = getT('drinkLabel');
+    if (drinkBtn) drinkBtn.innerText = getT('drinkBtn');
+    if (askPermissionBtn) askPermissionBtn.innerText = getT('askBtn');
+    if (peeBtn) peeBtn.innerText = getT('peeBtn');
+    if (cantHoldBtn) cantHoldBtn.innerText = getT('cantBtn');
+    if (resetProgressBtn) resetProgressBtn.innerText = getT('resetBtn');
+    if (editProfileBtn) editProfileBtn.innerText = getT('editBtn');
+    if (settingsBtn) settingsBtn.innerText = getT('settingsBtn');
+    if (leakingBtn) leakingBtn.innerText = getT('leakingBtn');
+    
+    // Экран профиля
+    const profileTitle = document.getElementById('profileTitle');
+    if (profileTitle) profileTitle.innerText = getT('profileTitle');
+    const nameLabel = document.getElementById('nameLabel');
+    if (nameLabel) nameLabel.innerText = getT('nameLabel');
+    const maxVolumeLabel = document.getElementById('maxVolumeLabel');
+    if (maxVolumeLabel) maxVolumeLabel.innerText = getT('maxVolumeLabel');
+    if (saveProfileBtn) saveProfileBtn.innerText = getT('saveBtn');
+    const profileNote = document.getElementById('profileNote');
+    if (profileNote) profileNote.innerText = getT('profileNote');
+    
+    // Экран настроек
+    const settingsTitle = document.getElementById('settingsTitle');
+    if (settingsTitle) settingsTitle.innerText = getT('settingsTitle');
+    const settingsLangLabel = document.getElementById('settingsLangLabel');
+    if (settingsLangLabel) settingsLangLabel.innerText = getT('languageLabel');
+    const settingsThemeLabel = document.getElementById('settingsThemeLabel');
+    if (settingsThemeLabel) settingsThemeLabel.innerText = getT('themeLabel');
+    const settingsIntervalLabel = document.getElementById('settingsIntervalLabel');
+    if (settingsIntervalLabel) settingsIntervalLabel.innerText = getT('intervalLabel');
+    const settingsIntervalNote = document.getElementById('settingsIntervalNote');
+    if (settingsIntervalNote) settingsIntervalNote.innerText = getT('intervalNote');
+    if (closeSettingsBtn) closeSettingsBtn.innerText = getT('closeSettings');
+    
+    // Опции темы
+    if (settingsThemeSelect) {
+      const lightOpt = settingsThemeSelect.querySelector('option[value="light"]');
+      const darkOpt = settingsThemeSelect.querySelector('option[value="dark"]');
+      if (lightOpt) lightOpt.text = getT('themeLight');
+      if (darkOpt) darkOpt.text = getT('themeDark');
+    }
+  }
+  
   function changeLanguage(lang) {
     if (!translations[lang]) return;
     currentLang = lang;
     localStorage.setItem('omoki_lang', lang);
-    // Обновляем язык в сохранённом профиле (если есть)
     const profile = JSON.parse(localStorage.getItem('omoki_profile') || '{}');
     profile.lang = lang;
     localStorage.setItem('omoki_profile', JSON.stringify(profile));
     
     updateUITexts();
     updateUI();
-    stopTimer();
-    ensureTimerRunning();
-    
-    langSelectProfile.value = lang;
-    langSelectMain.value = lang;
+    if (settingsLangSelect) settingsLangSelect.value = lang;
   }
-
+  
   // ---------- ОСНОВНАЯ ЛОГИКА ----------
   function stopTimer() {
     if (timerId) {
@@ -139,14 +199,14 @@
       timerId = null;
     }
   }
-
+  
   function updateUI() {
     volumeMainSpan.innerHTML = `${Math.floor(currentVolume)} mL / ${maxVolume} mL`;
     greetingSpan.innerText = userName;
     let percent = (currentVolume / maxVolume) * 100;
     if (percent > 100) percent = 100;
     progressFill.style.width = `${percent}%`;
-
+    
     let statusKey = 'moderate';
     if (currentVolume >= maxVolume * 1.5) statusKey = 'critical';
     else if (currentVolume >= maxVolume) statusKey = 'overflow';
@@ -156,7 +216,7 @@
     else statusKey = 'calm';
     statusMsgSpan.innerHTML = getT(`status.${statusKey}`);
   }
-
+  
   function processTick() {
     if (pendingMl <= 0) {
       stopTimer();
@@ -169,31 +229,30 @@
     updateUI();
     if (pendingMl === 0) stopTimer();
   }
-
+  
   function ensureTimerRunning() {
     if (timerId) return;
     if (pendingMl > 0) {
-      timerId = setInterval(() => processTick(), 3800);
+      timerId = setInterval(() => processTick(), fillIntervalMs);
     }
   }
-
+  
   function drinkAction() {
     let rawAmount = parseInt(drinkSlider.value, 10);
     if (isNaN(rawAmount)) rawAmount = 100;
     let chosenMl = Math.floor(Math.min(1000, Math.max(10, rawAmount)));
     if (chosenMl <= 0) return;
-
+    
     pendingMl = Math.floor(pendingMl + chosenMl);
     ensureTimerRunning();
     updateUI();
     statusMsgSpan.innerHTML = getT('drinkFeedback', { amount: chosenMl });
     setTimeout(() => updateUI(), 1800);
   }
-
+  
   function askPermission() {
     statusMsgSpan.innerHTML = getT('askWait');
     setTimeout(() => {
-      // Отказ, если объём выше 90% от максимума
       if (currentVolume > maxVolume * 0.9) {
         const denialPhrase = getRandomTrainerPhrase(currentLang, userName);
         statusMsgSpan.innerHTML = denialPhrase;
@@ -205,7 +264,7 @@
       setTimeout(() => updateUI(), 2000);
     }, 1500);
   }
-
+  
   function peeAction() {
     if (!permissionGranted) {
       statusMsgSpan.innerHTML = getT('peeWithoutPermission');
@@ -220,7 +279,7 @@
     statusMsgSpan.innerHTML = getT('peeDone');
     setTimeout(() => updateUI(), 2000);
   }
-
+  
   function cantHoldAction() {
     stopTimer();
     let lostVolume = currentVolume;
@@ -231,11 +290,10 @@
     statusMsgSpan.innerHTML = getT('cantHoldMsg', { amount: Math.floor(lostVolume) });
     setTimeout(() => updateUI(), 3000);
   }
-
+  
   function leakingAction() {
     const chance = Math.random() * 100;
     if (chance < 1) {
-      // Удачное подтекание – тренер разрешает (экстренное опорожнение)
       statusMsgSpan.innerHTML = getT('leakingGranted');
       stopTimer();
       currentVolume = 0;
@@ -248,7 +306,7 @@
       setTimeout(() => updateUI(), 1500);
     }
   }
-
+  
   function resetProgress() {
     stopTimer();
     currentVolume = 0;
@@ -258,7 +316,7 @@
     statusMsgSpan.innerHTML = getT('resetMsg');
     setTimeout(() => updateUI(), 1500);
   }
-
+  
   function saveProfile() {
     let newName = profileNameInput.value.trim();
     if (newName === "") newName = "Player";
@@ -280,7 +338,7 @@
     mainScreen.classList.add('active');
     updateUI();
   }
-
+  
   function loadSavedProfile() {
     const raw = localStorage.getItem('omoki_profile');
     if (raw) {
@@ -300,7 +358,7 @@
     }
     return false;
   }
-
+  
   function editProfile() {
     stopTimer();
     permissionGranted = false;
@@ -308,35 +366,68 @@
     profileMaxInput.value = maxVolume;
     profileScreen.classList.add('active');
     mainScreen.classList.remove('active');
+    settingsScreen.classList.remove('active');
     updateUITexts();
   }
-
+  
+  function openSettings() {
+    if (settingsLangSelect) settingsLangSelect.value = currentLang;
+    if (settingsThemeSelect) settingsThemeSelect.value = isDarkTheme ? 'dark' : 'light';
+    if (settingsIntervalInput) settingsIntervalInput.value = fillIntervalMs;
+    settingsScreen.classList.add('active');
+    mainScreen.classList.remove('active');
+    profileScreen.classList.remove('active');
+  }
+  
+  function closeSettings() {
+    // Применяем язык и тему
+    if (settingsLangSelect) {
+      const newLang = settingsLangSelect.value;
+      if (newLang !== currentLang && translations[newLang]) {
+        changeLanguage(newLang);
+      }
+    }
+    if (settingsThemeSelect) {
+      setThemeFromSelect(settingsThemeSelect.value);
+    }
+    if (settingsIntervalInput) {
+      let newInterval = parseInt(settingsIntervalInput.value, 10);
+      if (!isNaN(newInterval) && newInterval >= MIN_INTERVAL_MS && newInterval <= MAX_INTERVAL_MS) {
+        setFillInterval(newInterval);
+      } else {
+        settingsIntervalInput.value = fillIntervalMs;
+      }
+    }
+    settingsScreen.classList.remove('active');
+    const hasProfile = localStorage.getItem('omoki_profile');
+    if (hasProfile) {
+      mainScreen.classList.add('active');
+    } else {
+      profileScreen.classList.add('active');
+    }
+  }
+  
   function updateSliderLabel() {
     let val = parseInt(drinkSlider.value, 10);
     drinkAmountSpan.innerText = val;
   }
-
-  // Обновление UI после загрузки языка из профиля
-  function refreshLanguageFromProfile() {
-    updateUITexts();
-    langSelectProfile.value = currentLang;
-    langSelectMain.value = currentLang;
-  }
-
+  
   // ---------- ИНИЦИАЛИЗАЦИЯ ----------
   function init() {
     loadTheme();
+    loadFillInterval();
     const savedLang = localStorage.getItem('omoki_lang');
     if (savedLang && translations[savedLang]) currentLang = savedLang;
     populateLanguageSelectors();
     updateUITexts();
-
-    langSelectProfile.addEventListener('change', (e) => changeLanguage(e.target.value));
-    langSelectMain.addEventListener('change', (e) => changeLanguage(e.target.value));
-    themeToggleBtn.addEventListener('click', toggleTheme);
-    themeToggleBtnMain.addEventListener('click', toggleTheme);
-    if (leakingBtn) leakingBtn.addEventListener('click', leakingAction);
-
+    
+    if (settingsBtn) settingsBtn.addEventListener('click', openSettings);
+    if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', closeSettings);
+    if (settingsIntervalInput) {
+      settingsIntervalInput.addEventListener('input', onIntervalInputChange);
+      settingsIntervalInput.addEventListener('change', onIntervalInputChange);
+    }
+    
     drinkSlider.addEventListener('input', updateSliderLabel);
     updateSliderLabel();
     drinkBtn.addEventListener('click', drinkAction);
@@ -346,13 +437,14 @@
     resetProgressBtn.addEventListener('click', resetProgress);
     editProfileBtn.addEventListener('click', editProfile);
     saveProfileBtn.addEventListener('click', saveProfile);
-
+    if (leakingBtn) leakingBtn.addEventListener('click', leakingAction);
+    
     const hasProfile = loadSavedProfile();
     if (hasProfile) {
-      // Применяем загруженный язык к интерфейсу
-      refreshLanguageFromProfile();
+      updateUITexts();
       profileScreen.classList.remove('active');
       mainScreen.classList.add('active');
+      settingsScreen.classList.remove('active');
       updateUI();
     } else {
       userName = "";
@@ -364,9 +456,10 @@
       profileMaxInput.value = 500;
       profileScreen.classList.add('active');
       mainScreen.classList.remove('active');
+      settingsScreen.classList.remove('active');
       updateUI();
     }
   }
-
+  
   init();
 })();

@@ -1,6 +1,4 @@
-
-
-// trainer.js — реплики тренера при отказе (v0.20)
+// trainer.js — реплики тренера при отказе (v0.30)
 
 const trainerPhrases = {
   en: [
