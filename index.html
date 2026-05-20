@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Omo Trainer v0.41</title>
+  <title>Omo Trainer v0.52</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="app-container">
-  <!-- ЭКРАН 1: СОЗДАНИЕ ПРОФИЛЯ -->
+  <!-- ЭКРАН 1: ПРОФИЛЬ -->
   <div id="profileScreen" class="screen">
     <div class="card">
       <h1 id="profileTitle">Omo Trainer</h1>
@@ -21,7 +21,7 @@
     </div>
   </div>
 
-  <!-- ЭКРАН 2: ОСНОВНОЙ ТРЕКЕР -->
+  <!-- ЭКРАН 2: ОСНОВНОЙ -->
   <div id="mainScreen" class="screen">
     <div class="card">
       <div class="user-name" id="greetingName">player</div>
@@ -34,9 +34,7 @@
           <div class="progress-fill" id="progressFill"></div>
         </div>
       </div>
-      <div class="status-text" id="statusMsg">
-        Can't estimate time to potty emergency. Drink more.
-      </div>
+      <div class="status-text" id="statusMsg">All calm. Drink more.</div>
 
       <div class="slider-container">
         <div class="slider-label">
@@ -44,6 +42,10 @@
           <strong><span id="drinkAmountValue">100</span> ml</strong>
         </div>
         <input type="range" id="drinkSlider" min="10" max="1000" value="100" step="10">
+        <div class="drink-type-selector">
+          <label id="drinkTypeLabel" for="drinkTypeSelect">Drink type</label>
+          <select id="drinkTypeSelect"></select>
+        </div>
       </div>
 
       <button id="drinkButton">DRINK</button>
@@ -53,6 +55,7 @@
         <button id="peeButton">PEE</button>
         <button id="cantHoldBtn">I CAN'T HOLD IT!</button>
         <button id="leakingBtn">LEAKING</button>
+        <button id="breathingBtn">DEEP BREATHING</button>
       </div>
 
       <div class="double-buttons">
@@ -60,48 +63,95 @@
         <button id="settingsBtn">SETTINGS</button>
       </div>
 
-      <div class="version">
-        0.41
-      </div>
+      <div class="version">0.52</div>
     </div>
   </div>
 
-  <!-- ЭКРАН 3: НАСТРОЙКИ -->
+  <!-- ЭКРАН 3: ОБЩИЕ НАСТРОЙКИ -->
   <div id="settingsScreen" class="screen">
     <div class="card">
       <h2 id="settingsTitle">Settings</h2>
-      
       <div class="settings-row">
-        <label for="settingsLangSelect" id="settingsLangLabel">Language</label>
+        <label id="settingsLangLabel" for="settingsLangSelect">Language</label>
         <select id="settingsLangSelect"></select>
       </div>
-      
       <div class="settings-row">
-        <label for="settingsThemeSelect" id="settingsThemeLabel">Theme</label>
+        <label id="settingsThemeLabel" for="settingsThemeSelect">Theme</label>
         <select id="settingsThemeSelect">
           <option value="light">Light</option>
           <option value="dark">Dark</option>
         </select>
       </div>
-
-      <div class="settings-row">
-        <label for="realismToggle" id="realismLabel">Realism mode</label>
+      <div class="settings-row realism-row">
+        <label id="realismLabel" for="realismToggle">Realism mode</label>
         <label class="switch">
           <input type="checkbox" id="realismToggle">
           <span class="slider-round"></span>
         </label>
+        <button id="openRealismSettingsBtn" class="realism-settings-btn">REALISM SETTINGS</button>
         <div class="settings-note" id="realismNote">Only 50-70% of liquid reaches the bladder</div>
       </div>
-      
       <div class="settings-row">
-        <label for="settingsIntervalInput" id="settingsIntervalLabel">Fill interval (ms per 1 ml)</label>
+        <label id="settingsIntervalLabel" for="settingsIntervalInput">Fill interval (ms per 1 ml)</label>
         <input type="number" id="settingsIntervalInput" min="100" max="60000" step="100" value="3800">
         <div class="settings-note" id="settingsIntervalNote">Lower value = faster filling</div>
       </div>
-
       <div class="double-buttons">
         <button id="editProfileFromSettingsBtn">EDIT PROFILE</button>
         <button id="closeSettingsBtn" class="settings-close-btn">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ЭКРАН 4: РАСШИРЕННЫЕ НАСТРОЙКИ РЕАЛИЗМА (все id прописаны) -->
+  <div id="realismSettingsScreen" class="screen">
+    <div class="card realism-settings-card">
+      <h2 id="realismSettingsTitle">Realism Settings</h2>
+      
+      <div class="settings-category">
+        <h3 id="physiologyTitle">Physiology</h3>
+        <div class="settings-row"><label id="elasticityLabel" for="elasticitySlider">Bladder wall elasticity (0-100%)</label><input type="range" id="elasticitySlider" min="0" max="100" value="70"><span id="elasticityValue" class="slider-value">70%</span></div>
+        <div class="settings-row"><label id="sphincterLabel" for="sphincterSlider">Sphincter tone (0-100%)</label><input type="range" id="sphincterSlider" min="0" max="100" value="80"><span id="sphincterValue" class="slider-value">80%</span></div>
+        <div class="settings-row"><label id="sensitivityLabel" for="sensitivitySlider">Nerve sensitivity (0-100%)</label><input type="range" id="sensitivitySlider" min="0" max="100" value="60"><span id="sensitivityValue" class="slider-value">60%</span></div>
+        <div class="settings-row checkbox-row"><label id="residualCapacityLabel" for="residualCapacityToggle">Residual capacity</label><input type="checkbox" id="residualCapacityToggle"></div>
+        <div class="settings-row checkbox-row"><label id="urethralVolumeLabel" for="urethralVolumeToggle">Urethral dead space</label><input type="checkbox" id="urethralVolumeToggle"></div>
+      </div>
+
+      <div class="settings-category">
+        <h3 id="fluidManagementTitle">Fluid management</h3>
+        <div class="settings-row"><label id="absorptionRateLabel" for="absorptionSlider">Absorption speed (0.5x-2x)</label><input type="range" id="absorptionSlider" min="5" max="20" step="1" value="10"><span id="absorptionValue" class="slider-value">1.0x</span></div>
+        <div class="settings-row checkbox-row"><label id="diureticEffectLabel" for="diureticEffectToggle">Diuretic effect</label><input type="checkbox" id="diureticEffectToggle"></div>
+        <div class="settings-row"><label id="firstUrgeDelayLabel" for="delaySlider">First urge delay (0.5x-2x)</label><input type="range" id="delaySlider" min="5" max="20" step="1" value="10"><span id="delayValue" class="slider-value">1.0x</span></div>
+      </div>
+
+      <div class="settings-category">
+        <h3 id="externalConditionsTitle">External conditions</h3>
+        <div class="settings-row"><label id="temperatureLabel" for="temperatureSelect">Temperature</label><select id="temperatureSelect"></select></div>
+        <div class="settings-row checkbox-row"><label id="waterSoundsLabel" for="waterSoundsToggle">Water sounds effect</label><input type="checkbox" id="waterSoundsToggle"></div>
+        <div class="settings-row"><label id="shyBladderLabel" for="shyBladderSlider">Shy bladder (0-100%)</label><input type="range" id="shyBladderSlider" min="0" max="100" value="30"><span id="shyBladderValue" class="slider-value">30%</span></div>
+        <div class="settings-row checkbox-row"><label id="lockedDoorLabel" for="lockedDoorToggle">Locked door factor</label><input type="checkbox" id="lockedDoorToggle"></div>
+      </div>
+
+      <div class="settings-category">
+        <h3 id="postureActivityTitle">Posture & activity</h3>
+        <div class="settings-row checkbox-row"><label id="postureEffectLabel" for="postureEffectToggle">Posture effect</label><input type="checkbox" id="postureEffectToggle"></div>
+        <div class="settings-row"><label id="postureSelectLabel" for="postureSelect">Current posture</label><select id="postureSelect" disabled></select></div>
+        <div class="settings-row"><label id="activityLabel" for="activitySelect">Activity</label><select id="activitySelect"></select></div>
+        <div class="settings-row checkbox-row"><label id="breathingTechLabel" for="breathingTechToggle">Breathing techniques</label><input type="checkbox" id="breathingTechToggle"></div>
+      </div>
+
+      <div class="settings-category">
+        <h3 id="medicalTitle">Medical</h3>
+        <div class="settings-row"><label id="ageLabel" for="ageSelect">Age</label><select id="ageSelect"></select></div>
+        <div class="settings-row checkbox-row"><label id="prostateLabel" for="prostateToggle">Prostatitis / BPH</label><input type="checkbox" id="prostateToggle"></div>
+        <div class="settings-row checkbox-row"><label id="cystitisLabel" for="cystitisToggle">Cystitis</label><input type="checkbox" id="cystitisToggle"></div>
+        <div class="settings-row checkbox-row"><label id="pregnancyLabel" for="pregnancyToggle">Pregnancy</label><input type="checkbox" id="pregnancyToggle"></div>
+        <div class="settings-row checkbox-row"><label id="menstrualLabel" for="menstrualToggle">Menstrual cycle</label><input type="checkbox" id="menstrualToggle"></div>
+      </div>
+
+      <div class="double-buttons realism-buttons">
+        <button id="saveRealismSettingsBtn">SAVE AND CLOSE</button>
+        <button id="cancelRealismSettingsBtn">CANCEL</button>
       </div>
     </div>
   </div>
@@ -109,6 +159,7 @@
 
 <script src="locales.js"></script>
 <script src="trainer.js"></script>
+<script src="realism.js"></script>
 <script src="scripts.js"></script>
 </body>
 </html>
