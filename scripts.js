@@ -1,4 +1,4 @@
-// scripts.js — Omo Trainer v0.40 — режим реализма, анимации, перенос кнопки профиля, исправлен getT для вложенных ключей
+// scripts.js — Omo Trainer v0.41 — исправлены askPermission (сброс прав, фиксация объёма), остановка таймера, валидация имени
 (function() {
   // ---------- КОНСТАНТЫ ----------
   const MIN_INTERVAL_MS = 100;
@@ -88,11 +88,15 @@
   }
   
   // ---------- ИНТЕРВАЛ НАПОЛНЕНИЯ ----------
-  function restartTimer() {
+  function stopTimer() {
     if (timerId) {
       clearInterval(timerId);
       timerId = null;
     }
+  }
+  
+  function restartTimer() {
+    stopTimer();
     if (pendingMl > 0) {
       timerId = setInterval(() => processTick(), fillIntervalMs);
     }
@@ -124,15 +128,13 @@
     setFillInterval(raw);
   }
   
-  // ---------- ЯЗЫК (исправленный getT с поддержкой вложенности) ----------
+  // ---------- ЯЗЫК ----------
   function getT(key, placeholders = {}) {
-    // Поддержка точечной нотации, например "status.calm"
     const parts = key.split('.');
     let t = translations[currentLang];
     let fallback = translations.en;
     let value;
     
-    // Пытаемся получить значение из текущего языка
     let current = t;
     for (let part of parts) {
       if (current && typeof current === 'object' && current.hasOwnProperty(part)) {
@@ -144,7 +146,6 @@
     }
     value = (current && typeof current === 'string') ? current : null;
     
-    // Если не нашли, пробуем из английского
     if (!value) {
       let fbCurrent = fallback;
       for (let part of parts) {
@@ -158,7 +159,6 @@
       value = (fbCurrent && typeof fbCurrent === 'string') ? fbCurrent : key;
     }
     
-    // Замена плейсхолдеров
     let str = value;
     for (let [k, v] of Object.entries(placeholders)) {
       str = str.replace(`{${k}}`, v);
@@ -184,7 +184,6 @@
   }
   
   function updateUITexts() {
-    // Главный экран
     const bladderTitle = document.getElementById('bladderTitle');
     if (bladderTitle) bladderTitle.innerText = getT('bladderTitle');
     const drinkLabel = document.getElementById('drinkLabel');
@@ -197,14 +196,12 @@
     if (settingsBtn) settingsBtn.innerText = getT('settingsBtn');
     if (leakingBtn) leakingBtn.innerText = getT('leakingBtn');
     
-    // Экран профиля
     const profileTitle = document.getElementById('profileTitle');
     if (profileTitle) profileTitle.innerText = getT('profileTitle');
     const nameLabel = document.getElementById('nameLabel');
     if (nameLabel) nameLabel.innerText = getT('nameLabel');
     const maxVolumeLabel = document.getElementById('maxVolumeLabel');
     if (maxVolumeLabel) maxVolumeLabel.innerText = getT('maxVolumeLabel');
-    // Кнопка сохраниения: зависит от режима
     if (saveProfileBtn) {
       if (isEditing) {
         saveProfileBtn.innerText = getT('updateBtn');
@@ -215,7 +212,6 @@
     const profileNote = document.getElementById('profileNote');
     if (profileNote) profileNote.innerText = getT('profileNote');
     
-    // Экран настроек
     const settingsTitle = document.getElementById('settingsTitle');
     if (settingsTitle) settingsTitle.innerText = getT('settingsTitle');
     const settingsLangLabel = document.getElementById('settingsLangLabel');
@@ -233,7 +229,6 @@
     if (editProfileFromSettingsBtn) editProfileFromSettingsBtn.innerText = getT('editProfileLabel');
     if (closeSettingsBtn) closeSettingsBtn.innerText = getT('closeSettings');
     
-    // Опции темы
     if (settingsThemeSelect) {
       const lightOpt = settingsThemeSelect.querySelector('option[value="light"]');
       const darkOpt = settingsThemeSelect.querySelector('option[value="dark"]');
@@ -256,13 +251,6 @@
   }
   
   // ---------- ОСНОВНАЯ ЛОГИКА ----------
-  function stopTimer() {
-    if (timerId) {
-      clearInterval(timerId);
-      timerId = null;
-    }
-  }
-  
   function updateUI() {
     volumeMainSpan.innerHTML = `${Math.floor(currentVolume)} mL / ${maxVolume} mL`;
     greetingSpan.innerText = userName;
@@ -277,7 +265,6 @@
     else if (currentVolume >= maxVolume * 0.65) statusKey = 'hard';
     else if (currentVolume >= maxVolume * 0.35) statusKey = 'moderate';
     else statusKey = 'calm';
-    // Используем вложенный ключ
     statusMsgSpan.innerHTML = getT(`status.${statusKey}`);
   }
   
@@ -291,7 +278,7 @@
     pendingMl -= 1;
     if (pendingMl < 0) pendingMl = 0;
     updateUI();
-    if (pendingMl === 0) stopTimer();
+    if (pendingMl === 0) stopTimer();  // Немедленная остановка
   }
   
   function ensureTimerRunning() {
@@ -324,13 +311,17 @@
     updateUI();
   }
   
+  // ИСПРАВЛЕНА ФУНКЦИЯ askPermission
   function askPermission() {
+    permissionGranted = false;                    // сброс перед запросом
+    const volumeAtRequest = currentVolume;
+    const maxAtRequest = maxVolume;
     statusMsgSpan.innerHTML = getT('askWait');
     setTimeout(() => {
-      if (currentVolume > maxVolume * 0.9) {
+      if (volumeAtRequest > maxAtRequest * 0.9) {
         const denialPhrase = getRandomTrainerPhrase(currentLang, userName);
         statusMsgSpan.innerHTML = denialPhrase;
-        permissionGranted = false;
+        // permissionGranted остаётся false
       } else {
         statusMsgSpan.innerHTML = getT('askGranted');
         permissionGranted = true;
@@ -391,6 +382,7 @@
     setTimeout(() => updateUI(), 1500);
   }
   
+  // ИСПРАВЛЕНА ВАЛИДАЦИЯ ИМЕНИ
   function saveProfile() {
     let newName = profileNameInput.value.trim();
     if (newName === "") newName = "Player";
@@ -445,7 +437,6 @@
     switchToScreen('profileScreen');
   }
   
-  // Универсальная функция смены экрана с анимацией
   function switchToScreen(screenId) {
     const screens = ['profileScreen', 'mainScreen', 'settingsScreen'];
     screens.forEach(id => {
