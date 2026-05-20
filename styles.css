@@ -1,4 +1,4 @@
-/* styles.css — квадратный стиль, поддержка светлой/тёмной темы */
+/* styles.css — квадратный стиль, поддержка светлой/тёмной темы, анимации */
 :root {
   --bg: #ffffff;
   --text: #000000;
@@ -47,6 +47,26 @@ body {
   width: 100%;
   max-width: 560px;
   margin: 0 auto;
+  position: relative;
+  min-height: 600px;
+}
+
+/* Анимация для экранов */
+.screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
+.screen.active {
+  opacity: 1;
+  visibility: visible;
+  position: relative;
+  pointer-events: auto;
 }
 
 .card {
@@ -57,13 +77,6 @@ body {
   border-radius: 0px;
   box-shadow: none;
   transition: background 0.2s, border-color 0.2s;
-}
-
-.screen {
-  display: none;
-}
-.screen.active {
-  display: block;
 }
 
 h1, h2 {
@@ -252,4 +265,48 @@ input[type="range"]::-webkit-slider-thumb {
   margin-top: 12px;
   text-align: center;
   color: var(--text);
+}
+
+/* Switch (тумблер реализма) */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+  margin-top: 4px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider-round {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--progress-bg);
+  border: 1.5px solid var(--border);
+  transition: 0.2s;
+}
+.slider-round:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 2px;
+  background-color: var(--border);
+  transition: 0.2s;
+}
+input:checked + .slider-round:before {
+  transform: translateX(24px);
+}
+.slider-round {
+  border-radius: 28px;
+}
+.slider-round:before {
+  border-radius: 50%;
 }

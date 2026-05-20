@@ -1,8 +1,8 @@
-// scripts.js — Omo Trainer v0.31 — шаг ползунка 10 мл, интервал в мс
+// scripts.js — Omo Trainer v0.40 — режим реализма, анимации, перенос кнопки профиля, исправлен getT для вложенных ключей
 (function() {
   // ---------- КОНСТАНТЫ ----------
-  const MIN_INTERVAL_MS = 100;    // минимальное значение интервала (мс)
-  const MAX_INTERVAL_MS = 60000;  // максимальное значение интервала (мс)
+  const MIN_INTERVAL_MS = 100;
+  const MAX_INTERVAL_MS = 60000;
   
   // ---------- СОСТОЯНИЕ ----------
   let currentVolume = 0;
@@ -13,7 +13,9 @@
   let currentLang = "en";
   let isDarkTheme = false;
   let permissionGranted = false;
-  let fillIntervalMs = 3800;   // миллисекунд на 1 мл
+  let fillIntervalMs = 3800;
+  let realismEnabled = false;
+  let isEditing = false;
 
   // DOM-элементы
   const profileScreen = document.getElementById('profileScreen');
@@ -34,15 +36,16 @@
   const peeBtn = document.getElementById('peeButton');
   const cantHoldBtn = document.getElementById('cantHoldBtn');
   const resetProgressBtn = document.getElementById('resetProgressBtn');
-  const editProfileBtn = document.getElementById('editProfileBtn');
   const settingsBtn = document.getElementById('settingsBtn');
   const leakingBtn = document.getElementById('leakingBtn');
+  const editProfileFromSettingsBtn = document.getElementById('editProfileFromSettingsBtn');
   
   // Элементы настроек
   const settingsLangSelect = document.getElementById('settingsLangSelect');
   const settingsThemeSelect = document.getElementById('settingsThemeSelect');
   const settingsIntervalInput = document.getElementById('settingsIntervalInput');
   const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  const realismToggle = document.getElementById('realismToggle');
   
   // ---------- ФУНКЦИИ ТЕМЫ ----------
   function applyTheme() {
@@ -65,6 +68,23 @@
     const saved = localStorage.getItem('omoki_theme');
     isDarkTheme = (saved === 'dark');
     applyTheme();
+  }
+  
+  // ---------- РЕЖИМ РЕАЛИЗМА ----------
+  function loadRealism() {
+    const saved = localStorage.getItem('omoki_realism');
+    realismEnabled = (saved === 'true');
+    if (realismToggle) realismToggle.checked = realismEnabled;
+  }
+  
+  function saveRealism() {
+    localStorage.setItem('omoki_realism', realismEnabled);
+    if (realismToggle) realismToggle.checked = realismEnabled;
+  }
+  
+  function toggleRealism() {
+    realismEnabled = realismToggle.checked;
+    saveRealism();
   }
   
   // ---------- ИНТЕРВАЛ НАПОЛНЕНИЯ ----------
@@ -104,10 +124,42 @@
     setFillInterval(raw);
   }
   
-  // ---------- ЯЗЫК ----------
+  // ---------- ЯЗЫК (исправленный getT с поддержкой вложенности) ----------
   function getT(key, placeholders = {}) {
+    // Поддержка точечной нотации, например "status.calm"
+    const parts = key.split('.');
     let t = translations[currentLang];
-    let str = t && t[key] ? t[key] : translations.en[key] || key;
+    let fallback = translations.en;
+    let value;
+    
+    // Пытаемся получить значение из текущего языка
+    let current = t;
+    for (let part of parts) {
+      if (current && typeof current === 'object' && current.hasOwnProperty(part)) {
+        current = current[part];
+      } else {
+        current = undefined;
+        break;
+      }
+    }
+    value = (current && typeof current === 'string') ? current : null;
+    
+    // Если не нашли, пробуем из английского
+    if (!value) {
+      let fbCurrent = fallback;
+      for (let part of parts) {
+        if (fbCurrent && typeof fbCurrent === 'object' && fbCurrent.hasOwnProperty(part)) {
+          fbCurrent = fbCurrent[part];
+        } else {
+          fbCurrent = undefined;
+          break;
+        }
+      }
+      value = (fbCurrent && typeof fbCurrent === 'string') ? fbCurrent : key;
+    }
+    
+    // Замена плейсхолдеров
+    let str = value;
     for (let [k, v] of Object.entries(placeholders)) {
       str = str.replace(`{${k}}`, v);
     }
@@ -142,7 +194,6 @@
     if (peeBtn) peeBtn.innerText = getT('peeBtn');
     if (cantHoldBtn) cantHoldBtn.innerText = getT('cantBtn');
     if (resetProgressBtn) resetProgressBtn.innerText = getT('resetBtn');
-    if (editProfileBtn) editProfileBtn.innerText = getT('editBtn');
     if (settingsBtn) settingsBtn.innerText = getT('settingsBtn');
     if (leakingBtn) leakingBtn.innerText = getT('leakingBtn');
     
@@ -153,7 +204,14 @@
     if (nameLabel) nameLabel.innerText = getT('nameLabel');
     const maxVolumeLabel = document.getElementById('maxVolumeLabel');
     if (maxVolumeLabel) maxVolumeLabel.innerText = getT('maxVolumeLabel');
-    if (saveProfileBtn) saveProfileBtn.innerText = getT('saveBtn');
+    // Кнопка сохраниения: зависит от режима
+    if (saveProfileBtn) {
+      if (isEditing) {
+        saveProfileBtn.innerText = getT('updateBtn');
+      } else {
+        saveProfileBtn.innerText = getT('saveBtn');
+      }
+    }
     const profileNote = document.getElementById('profileNote');
     if (profileNote) profileNote.innerText = getT('profileNote');
     
@@ -168,6 +226,11 @@
     if (settingsIntervalLabel) settingsIntervalLabel.innerText = getT('intervalLabel');
     const settingsIntervalNote = document.getElementById('settingsIntervalNote');
     if (settingsIntervalNote) settingsIntervalNote.innerText = getT('intervalNote');
+    const realismLabel = document.getElementById('realismLabel');
+    if (realismLabel) realismLabel.innerText = getT('realismLabel');
+    const realismNote = document.getElementById('realismNote');
+    if (realismNote) realismNote.innerText = getT('realismNote');
+    if (editProfileFromSettingsBtn) editProfileFromSettingsBtn.innerText = getT('editProfileLabel');
     if (closeSettingsBtn) closeSettingsBtn.innerText = getT('closeSettings');
     
     // Опции темы
@@ -214,6 +277,7 @@
     else if (currentVolume >= maxVolume * 0.65) statusKey = 'hard';
     else if (currentVolume >= maxVolume * 0.35) statusKey = 'moderate';
     else statusKey = 'calm';
+    // Используем вложенный ключ
     statusMsgSpan.innerHTML = getT(`status.${statusKey}`);
   }
   
@@ -243,11 +307,21 @@
     let chosenMl = Math.floor(Math.min(1000, Math.max(10, rawAmount)));
     if (chosenMl <= 0) return;
     
-    pendingMl = Math.floor(pendingMl + chosenMl);
+    let absorbedMl = chosenMl;
+    if (realismEnabled) {
+      const factor = 0.5 + Math.random() * 0.2;
+      absorbedMl = Math.floor(chosenMl * factor);
+      if (absorbedMl < 1) absorbedMl = 1;
+      statusMsgSpan.innerHTML = getT('realismFeedback', { absorbed: absorbedMl, drank: chosenMl });
+      setTimeout(() => updateUI(), 2500);
+    } else {
+      statusMsgSpan.innerHTML = getT('drinkFeedback', { amount: chosenMl });
+      setTimeout(() => updateUI(), 1800);
+    }
+    
+    pendingMl = Math.floor(pendingMl + absorbedMl);
     ensureTimerRunning();
     updateUI();
-    statusMsgSpan.innerHTML = getT('drinkFeedback', { amount: chosenMl });
-    setTimeout(() => updateUI(), 1800);
   }
   
   function askPermission() {
@@ -320,22 +394,24 @@
   function saveProfile() {
     let newName = profileNameInput.value.trim();
     if (newName === "") newName = "Player";
-    userName = newName;
     let newMax = parseInt(profileMaxInput.value, 10);
     if (isNaN(newMax)) newMax = 500;
     newMax = Math.min(5000, Math.max(100, newMax));
+    
+    userName = newName;
     maxVolume = newMax;
     currentVolume = 0;
     pendingMl = 0;
     permissionGranted = false;
     stopTimer();
     updateUI();
+    
     const profile = { userName, maxVolume, lang: currentLang };
-    try {
-      localStorage.setItem('omoki_profile', JSON.stringify(profile));
-    } catch(e) { console.warn("LocalStorage save failed", e); }
-    profileScreen.classList.remove('active');
-    mainScreen.classList.add('active');
+    localStorage.setItem('omoki_profile', JSON.stringify(profile));
+    
+    isEditing = false;
+    updateUITexts();
+    switchToScreen('mainScreen');
     updateUI();
   }
   
@@ -364,23 +440,35 @@
     permissionGranted = false;
     profileNameInput.value = userName;
     profileMaxInput.value = maxVolume;
-    profileScreen.classList.add('active');
-    mainScreen.classList.remove('active');
-    settingsScreen.classList.remove('active');
+    isEditing = true;
     updateUITexts();
+    switchToScreen('profileScreen');
+  }
+  
+  // Универсальная функция смены экрана с анимацией
+  function switchToScreen(screenId) {
+    const screens = ['profileScreen', 'mainScreen', 'settingsScreen'];
+    screens.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        if (id === screenId) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      }
+    });
   }
   
   function openSettings() {
     if (settingsLangSelect) settingsLangSelect.value = currentLang;
     if (settingsThemeSelect) settingsThemeSelect.value = isDarkTheme ? 'dark' : 'light';
     if (settingsIntervalInput) settingsIntervalInput.value = fillIntervalMs;
-    settingsScreen.classList.add('active');
-    mainScreen.classList.remove('active');
-    profileScreen.classList.remove('active');
+    if (realismToggle) realismToggle.checked = realismEnabled;
+    switchToScreen('settingsScreen');
   }
   
   function closeSettings() {
-    // Применяем язык и тему
     if (settingsLangSelect) {
       const newLang = settingsLangSelect.value;
       if (newLang !== currentLang && translations[newLang]) {
@@ -398,12 +486,15 @@
         settingsIntervalInput.value = fillIntervalMs;
       }
     }
-    settingsScreen.classList.remove('active');
+    if (realismToggle) {
+      realismEnabled = realismToggle.checked;
+      saveRealism();
+    }
     const hasProfile = localStorage.getItem('omoki_profile');
     if (hasProfile) {
-      mainScreen.classList.add('active');
+      switchToScreen('mainScreen');
     } else {
-      profileScreen.classList.add('active');
+      switchToScreen('profileScreen');
     }
   }
   
@@ -416,6 +507,7 @@
   function init() {
     loadTheme();
     loadFillInterval();
+    loadRealism();
     const savedLang = localStorage.getItem('omoki_lang');
     if (savedLang && translations[savedLang]) currentLang = savedLang;
     populateLanguageSelectors();
@@ -427,6 +519,8 @@
       settingsIntervalInput.addEventListener('input', onIntervalInputChange);
       settingsIntervalInput.addEventListener('change', onIntervalInputChange);
     }
+    if (realismToggle) realismToggle.addEventListener('change', toggleRealism);
+    if (editProfileFromSettingsBtn) editProfileFromSettingsBtn.addEventListener('click', editProfile);
     
     drinkSlider.addEventListener('input', updateSliderLabel);
     updateSliderLabel();
@@ -435,16 +529,13 @@
     peeBtn.addEventListener('click', peeAction);
     cantHoldBtn.addEventListener('click', cantHoldAction);
     resetProgressBtn.addEventListener('click', resetProgress);
-    editProfileBtn.addEventListener('click', editProfile);
-    saveProfileBtn.addEventListener('click', saveProfile);
     if (leakingBtn) leakingBtn.addEventListener('click', leakingAction);
+    saveProfileBtn.addEventListener('click', saveProfile);
     
     const hasProfile = loadSavedProfile();
     if (hasProfile) {
       updateUITexts();
-      profileScreen.classList.remove('active');
-      mainScreen.classList.add('active');
-      settingsScreen.classList.remove('active');
+      switchToScreen('mainScreen');
       updateUI();
     } else {
       userName = "";
@@ -452,11 +543,11 @@
       currentVolume = 0;
       pendingMl = 0;
       permissionGranted = false;
+      isEditing = false;
       profileNameInput.value = "";
       profileMaxInput.value = 500;
-      profileScreen.classList.add('active');
-      mainScreen.classList.remove('active');
-      settingsScreen.classList.remove('active');
+      updateUITexts();
+      switchToScreen('profileScreen');
       updateUI();
     }
   }
