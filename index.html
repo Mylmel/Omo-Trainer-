@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Omo Trainer v0.52</title>
+  <title>Omo Trainer v0.51</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -24,7 +24,10 @@
   <!-- ЭКРАН 2: ОСНОВНОЙ -->
   <div id="mainScreen" class="screen">
     <div class="card">
-      <div class="user-name" id="greetingName">player</div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+        <div class="user-name" id="greetingName">player</div>
+        <div class="version-top">v0.51</div>
+      </div>
       <h2 id="bladderTitle">Bladder</h2>
       <div class="volume-digits">
         <span id="volumeMain">0 mL / 500 mL</span>
@@ -62,8 +65,6 @@
         <button id="resetProgressBtn">RESET</button>
         <button id="settingsBtn">SETTINGS</button>
       </div>
-
-      <div class="version">0.52</div>
     </div>
   </div>
 
@@ -103,50 +104,51 @@
     </div>
   </div>
 
-  <!-- ЭКРАН 4: РАСШИРЕННЫЕ НАСТРОЙКИ РЕАЛИЗМА (все id прописаны) -->
+  <!-- ЭКРАН 4: РАСШИРЕННЫЕ НАСТРОЙКИ РЕАЛИЗМА (только оставшиеся опции) -->
   <div id="realismSettingsScreen" class="screen">
     <div class="card realism-settings-card">
       <h2 id="realismSettingsTitle">Realism Settings</h2>
-      
-      <div class="settings-category">
-        <h3 id="physiologyTitle">Physiology</h3>
-        <div class="settings-row"><label id="elasticityLabel" for="elasticitySlider">Bladder wall elasticity (0-100%)</label><input type="range" id="elasticitySlider" min="0" max="100" value="70"><span id="elasticityValue" class="slider-value">70%</span></div>
-        <div class="settings-row"><label id="sphincterLabel" for="sphincterSlider">Sphincter tone (0-100%)</label><input type="range" id="sphincterSlider" min="0" max="100" value="80"><span id="sphincterValue" class="slider-value">80%</span></div>
-        <div class="settings-row"><label id="sensitivityLabel" for="sensitivitySlider">Nerve sensitivity (0-100%)</label><input type="range" id="sensitivitySlider" min="0" max="100" value="60"><span id="sensitivityValue" class="slider-value">60%</span></div>
-        <div class="settings-row checkbox-row"><label id="residualCapacityLabel" for="residualCapacityToggle">Residual capacity</label><input type="checkbox" id="residualCapacityToggle"></div>
-        <div class="settings-row checkbox-row"><label id="urethralVolumeLabel" for="urethralVolumeToggle">Urethral dead space</label><input type="checkbox" id="urethralVolumeToggle"></div>
-      </div>
 
-      <div class="settings-category">
-        <h3 id="fluidManagementTitle">Fluid management</h3>
-        <div class="settings-row"><label id="absorptionRateLabel" for="absorptionSlider">Absorption speed (0.5x-2x)</label><input type="range" id="absorptionSlider" min="5" max="20" step="1" value="10"><span id="absorptionValue" class="slider-value">1.0x</span></div>
-        <div class="settings-row checkbox-row"><label id="diureticEffectLabel" for="diureticEffectToggle">Diuretic effect</label><input type="checkbox" id="diureticEffectToggle"></div>
-        <div class="settings-row"><label id="firstUrgeDelayLabel" for="delaySlider">First urge delay (0.5x-2x)</label><input type="range" id="delaySlider" min="5" max="20" step="1" value="10"><span id="delayValue" class="slider-value">1.0x</span></div>
-      </div>
-
+      <!-- Внешние условия -->
       <div class="settings-category">
         <h3 id="externalConditionsTitle">External conditions</h3>
-        <div class="settings-row"><label id="temperatureLabel" for="temperatureSelect">Temperature</label><select id="temperatureSelect"></select></div>
-        <div class="settings-row checkbox-row"><label id="waterSoundsLabel" for="waterSoundsToggle">Water sounds effect</label><input type="checkbox" id="waterSoundsToggle"></div>
-        <div class="settings-row"><label id="shyBladderLabel" for="shyBladderSlider">Shy bladder (0-100%)</label><input type="range" id="shyBladderSlider" min="0" max="100" value="30"><span id="shyBladderValue" class="slider-value">30%</span></div>
-        <div class="settings-row checkbox-row"><label id="lockedDoorLabel" for="lockedDoorToggle">Locked door factor</label><input type="checkbox" id="lockedDoorToggle"></div>
+        <div class="settings-row">
+          <label id="temperatureLabel" for="temperatureSelect">Temperature</label>
+          <select id="temperatureSelect"></select>
+        </div>
+        <div class="settings-row checkbox-row">
+          <label id="waterSoundsLabel" for="waterSoundsToggle">Water sounds effect</label>
+          <input type="checkbox" id="waterSoundsToggle">
+        </div>
+        <div class="settings-row checkbox-row">
+          <label id="lockedDoorLabel" for="lockedDoorToggle">Locked door factor</label>
+          <input type="checkbox" id="lockedDoorToggle">
+        </div>
       </div>
 
-      <div class="settings-category">
-        <h3 id="postureActivityTitle">Posture & activity</h3>
-        <div class="settings-row checkbox-row"><label id="postureEffectLabel" for="postureEffectToggle">Posture effect</label><input type="checkbox" id="postureEffectToggle"></div>
-        <div class="settings-row"><label id="postureSelectLabel" for="postureSelect">Current posture</label><select id="postureSelect" disabled></select></div>
-        <div class="settings-row"><label id="activityLabel" for="activitySelect">Activity</label><select id="activitySelect"></select></div>
-        <div class="settings-row checkbox-row"><label id="breathingTechLabel" for="breathingTechToggle">Breathing techniques</label><input type="checkbox" id="breathingTechToggle"></div>
-      </div>
-
+      <!-- Медицинские состояния -->
       <div class="settings-category">
         <h3 id="medicalTitle">Medical</h3>
-        <div class="settings-row"><label id="ageLabel" for="ageSelect">Age</label><select id="ageSelect"></select></div>
-        <div class="settings-row checkbox-row"><label id="prostateLabel" for="prostateToggle">Prostatitis / BPH</label><input type="checkbox" id="prostateToggle"></div>
-        <div class="settings-row checkbox-row"><label id="cystitisLabel" for="cystitisToggle">Cystitis</label><input type="checkbox" id="cystitisToggle"></div>
-        <div class="settings-row checkbox-row"><label id="pregnancyLabel" for="pregnancyToggle">Pregnancy</label><input type="checkbox" id="pregnancyToggle"></div>
-        <div class="settings-row checkbox-row"><label id="menstrualLabel" for="menstrualToggle">Menstrual cycle</label><input type="checkbox" id="menstrualToggle"></div>
+        <div class="settings-row">
+          <label id="ageLabel" for="ageSelect">Age</label>
+          <select id="ageSelect"></select>
+        </div>
+        <div class="settings-row checkbox-row">
+          <label id="prostateLabel" for="prostateToggle">Prostatitis / BPH</label>
+          <input type="checkbox" id="prostateToggle">
+        </div>
+        <div class="settings-row checkbox-row">
+          <label id="cystitisLabel" for="cystitisToggle">Cystitis</label>
+          <input type="checkbox" id="cystitisToggle">
+        </div>
+        <div class="settings-row checkbox-row">
+          <label id="pregnancyLabel" for="pregnancyToggle">Pregnancy</label>
+          <input type="checkbox" id="pregnancyToggle">
+        </div>
+        <div class="settings-row checkbox-row">
+          <label id="menstrualLabel" for="menstrualToggle">Menstrual cycle</label>
+          <input type="checkbox" id="menstrualToggle">
+        </div>
       </div>
 
       <div class="double-buttons realism-buttons">

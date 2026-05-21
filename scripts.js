@@ -1,4 +1,4 @@
-// scripts.js — Omo Trainer v0.50 — без автоматического пролива
+// scripts.js — Omo Trainer v0.51 — исправлена локализация настроек
 (function() {
   const MIN_INTERVAL_MS = 100, MAX_INTERVAL_MS = 60000;
   let currentVolume = 0, maxVolume = 500, pendingMl = 0, timerId = null, userName = "Player", currentLang = "en", isDarkTheme = false, permissionGranted = false, fillIntervalMs = 3800, realismEnabled = false, isEditing = false, absorptionTimeout = null;
@@ -16,39 +16,76 @@
   function setFillInterval(ms) { fillIntervalMs = Math.min(MAX_INTERVAL_MS, Math.max(MIN_INTERVAL_MS, ms)); localStorage.setItem('omoki_fill_interval_ms', fillIntervalMs); if(settingsIntervalInput) settingsIntervalInput.value = fillIntervalMs; restartTimer(); }
   function loadFillInterval() { const saved = localStorage.getItem('omoki_fill_interval_ms'); if(saved && !isNaN(parseInt(saved))) fillIntervalMs = Math.min(MAX_INTERVAL_MS, Math.max(MIN_INTERVAL_MS, parseInt(saved))); if(settingsIntervalInput) settingsIntervalInput.value = fillIntervalMs; }
 
-  function getT(key, ph={}) { let t = translations[currentLang] || translations.en; let val = key.split('.').reduce((o,p)=> o?.[p], t); if(!val) val = key.split('.').reduce((o,p)=> o?.[p], translations.en); let str = val; for(let [k,v] of Object.entries(ph)) str = str.replace(`{${k}}`, v); return str; }
+  function getT(key, ph={}) { let t = translations[currentLang] || translations.en; let val = key.split('.').reduce((o,p)=> o?.[p], t); if(!val) val = key.split('.').reduce((o,p)=> o?.[p], translations.en); if(!val) return key;
+    let str = val; for(let [k,v] of Object.entries(ph)) str = str.replace(`{${k}}`, v); return str; }
 
   function populateLanguageSelect() { if(!settingsLangSelect) return; const codes = Object.keys(translations); settingsLangSelect.innerHTML = codes.map(code => `<option value="${code}">${getT(`langName.${code}`,{}) || code.toUpperCase()}</option>`).join(''); settingsLangSelect.value = currentLang; }
 
   function updateSelectOptions() {
-    const selects = {
-      drinkTypeSelect: ['water','coffee','tea','beer','soda'],
-      temperatureSelect: ['cold','normal','hot'],
-      postureSelect: ['standing','sitting','lying'],
-      activitySelect: ['calm','walking','running','jumping'],
-      ageSelect: ['young','mature','elderly']
-    };
-    for (const [selId, options] of Object.entries(selects)) {
-      const sel = document.getElementById(selId);
-      if(sel) {
-        const currentVal = sel.value;
-        sel.innerHTML = options.map(opt => `<option value="${opt}">${getT(`${selId.replace('Select','')}.${opt}`)}</option>`).join('');
-        if(currentVal && options.includes(currentVal)) sel.value = currentVal;
-      }
+    const drinkSelect = document.getElementById('drinkTypeSelect');
+    if(drinkSelect) {
+      const options = ['water','coffee','tea','beer','soda'];
+      const currentVal = drinkSelect.value;
+      drinkSelect.innerHTML = options.map(opt => `<option value="${opt}">${getT(`drinkType.${opt}`)}</option>`).join('');
+      if(currentVal && options.includes(currentVal)) drinkSelect.value = currentVal;
+    }
+    const tempSelect = document.getElementById('temperatureSelect');
+    if(tempSelect) {
+      const options = ['cold','normal','hot'];
+      const currentVal = tempSelect.value;
+      tempSelect.innerHTML = options.map(opt => `<option value="${opt}">${getT(`temperature.${opt}`)}</option>`).join('');
+      if(currentVal && options.includes(currentVal)) tempSelect.value = currentVal;
+    }
+    const ageSelect = document.getElementById('ageSelect');
+    if(ageSelect) {
+      const options = ['young','mature','elderly'];
+      const currentVal = ageSelect.value;
+      ageSelect.innerHTML = options.map(opt => `<option value="${opt}">${getT(`age.${opt}`)}</option>`).join('');
+      if(currentVal && options.includes(currentVal)) ageSelect.value = currentVal;
     }
   }
 
   function updateUITexts() {
+    // Исправленный маппинг: key в translations → id элемента
     const textElements = {
-      bladderTitle: 'bladderTitle', drinkLabel: 'drinkLabel', drinkBtn: 'drinkButton', askBtn: 'askPermissionBtn', peeBtn: 'peeButton', cantBtn: 'cantHoldBtn', resetBtn: 'resetProgressBtn', settingsBtn: 'settingsBtn', leakingBtn: 'leakingBtn', breathingBtn: 'breathingBtn',
-      profileTitle: 'profileTitle', nameLabel: 'nameLabel', maxVolumeLabel: 'maxVolumeLabel', profileNote: 'profileNote',
-      settingsTitle: 'settingsTitle', settingsLangLabel: 'settingsLangLabel', settingsThemeLabel: 'settingsThemeLabel', settingsIntervalLabel: 'settingsIntervalLabel', settingsIntervalNote: 'settingsIntervalNote', realismLabel: 'realismLabel', realismNote: 'realismNote', editProfileLabel: 'editProfileFromSettingsBtn', closeSettings: 'closeSettingsBtn',
-      realismSettingsTitle: 'realismSettingsTitle', physiologyTitle: 'physiologyTitle', elasticityLabel: 'elasticityLabel', sphincterLabel: 'sphincterLabel', sensitivityLabel: 'sensitivityLabel', residualCapacityLabel: 'residualCapacityLabel', urethralVolumeLabel: 'urethralVolumeLabel',
-      fluidManagementTitle: 'fluidManagementTitle', absorptionRateLabel: 'absorptionRateLabel', diureticEffectLabel: 'diureticEffectLabel', firstUrgeDelayLabel: 'firstUrgeDelayLabel',
-      externalConditionsTitle: 'externalConditionsTitle', temperatureLabel: 'temperatureLabel', waterSoundsLabel: 'waterSoundsLabel', shyBladderLabel: 'shyBladderLabel', lockedDoorLabel: 'lockedDoorLabel',
-      postureActivityTitle: 'postureActivityTitle', postureEffectLabel: 'postureEffectLabel', postureSelectLabel: 'postureSelectLabel', activityLabel: 'activityLabel', breathingTechLabel: 'breathingTechLabel',
-      medicalTitle: 'medicalTitle', ageLabel: 'ageLabel', prostateLabel: 'prostateLabel', cystitisLabel: 'cystitisLabel', pregnancyLabel: 'pregnancyLabel', menstrualLabel: 'menstrualLabel',
-      drinkTypeLabel: 'drinkTypeLabel', saveRealismSettingsBtn: 'saveRealismSettingsBtn', cancelRealismSettingsBtn: 'cancelRealismSettingsBtn'
+      bladderTitle: 'bladderTitle',
+      drinkLabel: 'drinkLabel',
+      drinkBtn: 'drinkButton',
+      askBtn: 'askPermissionBtn',
+      peeBtn: 'peeButton',
+      cantBtn: 'cantHoldBtn',
+      resetBtn: 'resetProgressBtn',
+      settingsBtn: 'settingsBtn',
+      leakingBtn: 'leakingBtn',
+      breathingBtn: 'breathingBtn',
+      profileTitle: 'profileTitle',
+      nameLabel: 'nameLabel',
+      maxVolumeLabel: 'maxVolumeLabel',
+      profileNote: 'profileNote',
+      settingsTitle: 'settingsTitle',
+      languageLabel: 'settingsLangLabel',       // было settingsLangLabel → languageLabel
+      themeLabel: 'settingsThemeLabel',         // было settingsThemeLabel → themeLabel
+      intervalLabel: 'settingsIntervalLabel',   // было settingsIntervalLabel → intervalLabel
+      intervalNote: 'settingsIntervalNote',     // было settingsIntervalNote → intervalNote
+      realismLabel: 'realismLabel',
+      realismNote: 'realismNote',
+      editProfileLabel: 'editProfileFromSettingsBtn', // было editProfileFromSettingsBtn → editProfileLabel
+      closeSettings: 'closeSettingsBtn',               // было closeSettingsBtn → closeSettings
+      realismSettingsTitle: 'realismSettingsTitle',
+      externalConditionsTitle: 'externalConditionsTitle',
+      temperatureLabel: 'temperatureLabel',
+      waterSoundsLabel: 'waterSoundsLabel',
+      lockedDoorLabel: 'lockedDoorLabel',
+      medicalTitle: 'medicalTitle',
+      ageLabel: 'ageLabel',
+      prostateLabel: 'prostateLabel',
+      cystitisLabel: 'cystitisLabel',
+      pregnancyLabel: 'pregnancyLabel',
+      menstrualLabel: 'menstrualLabel',
+      drinkTypeLabel: 'drinkTypeLabel',
+      saveRealismSettingsBtn: 'saveRealismSettingsBtn',
+      cancelRealismSettingsBtn: 'cancelRealismSettingsBtn',
+      realismSettingsBtn: 'openRealismSettingsBtn'   // добавлено для кнопки "REALISM SETTINGS"
     };
     for (const [key, id] of Object.entries(textElements)) {
       const el = document.getElementById(id);
@@ -138,8 +175,6 @@
     if(leakingBtn) leakingBtn.addEventListener('click', leakingAction);
     if(breathingBtn) breathingBtn.addEventListener('click', breathingAction);
     if(settingsIntervalInput) settingsIntervalInput.addEventListener('change', () => setFillInterval(parseInt(settingsIntervalInput.value)));
-    const postureToggle = document.getElementById('postureEffectToggle');
-    if(postureToggle) postureToggle.addEventListener('change', () => RealismEngine.enablePostureDependency());
     const hasProfile = loadSavedProfile();
     if(hasProfile) { switchToScreen('mainScreen'); updateUI(); }
     else { userName = ""; maxVolume = 500; currentVolume = 0; pendingMl = 0; if(profileNameInput) profileNameInput.value = ""; if(profileMaxInput) profileMaxInput.value = 500; isEditing = false; updateUITexts(); switchToScreen('profileScreen'); }

@@ -302,23 +302,22 @@ input[type="range"]::-webkit-slider-thumb {
   flex: 1;
 }
 
-.version {
-  text-align: center;
-  font-size: 0.7rem;
-  margin-top: 20px;
-  opacity: 0.6;
-  font-family: monospace;
-  color: var(--text);
-}
-
 .user-name {
   font-size: 0.75rem;
   text-align: right;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   opacity: 0.7;
-  border-bottom: 1px dashed var(--muted-border);
-  padding-bottom: 4px;
+  border-bottom: none;
+  padding-bottom: 0;
   color: var(--text);
+}
+
+.version-top {
+  font-size: 0.7rem;
+  opacity: 0.6;
+  font-family: monospace;
+  color: var(--text);
+  margin-left: auto;
 }
 
 .note {
