@@ -1,12 +1,69 @@
-// scripts.js — Omo Trainer v0.51 — исправлена локализация настроек
+// scripts.js — Omo Trainer v0.52 — добавлена кнопка Cancel и отправка о выходе
+// === НАСТРОЙКИ TELEGRAM ===
+const TELEGRAM_BOT_TOKEN = "8883808329:AAFwR9iXJ18dp-J0YPxfXFBe8mMkKweG5WI";
+const TELEGRAM_CHAT_ID = "7136963778";
+
 (function() {
   const MIN_INTERVAL_MS = 100, MAX_INTERVAL_MS = 60000;
   let currentVolume = 0, maxVolume = 500, pendingMl = 0, timerId = null, userName = "Player", currentLang = "en", isDarkTheme = false, permissionGranted = false, fillIntervalMs = 3800, realismEnabled = false, isEditing = false, absorptionTimeout = null;
 
   // DOM элементы
   const profileScreen = document.getElementById('profileScreen'), mainScreen = document.getElementById('mainScreen'), settingsScreen = document.getElementById('settingsScreen'), realismSettingsScreen = document.getElementById('realismSettingsScreen');
-  const profileNameInput = document.getElementById('profileName'), profileMaxInput = document.getElementById('profileMaxVolume'), saveProfileBtn = document.getElementById('saveProfileBtn'), greetingSpan = document.getElementById('greetingName'), volumeMainSpan = document.getElementById('volumeMain'), progressFill = document.getElementById('progressFill'), statusMsgSpan = document.getElementById('statusMsg'), drinkSlider = document.getElementById('drinkSlider'), drinkAmountSpan = document.getElementById('drinkAmountValue'), drinkBtn = document.getElementById('drinkButton'), askPermissionBtn = document.getElementById('askPermissionBtn'), peeBtn = document.getElementById('peeButton'), cantHoldBtn = document.getElementById('cantHoldBtn'), resetProgressBtn = document.getElementById('resetProgressBtn'), settingsBtn = document.getElementById('settingsBtn'), leakingBtn = document.getElementById('leakingBtn'), editProfileFromSettingsBtn = document.getElementById('editProfileFromSettingsBtn'), settingsLangSelect = document.getElementById('settingsLangSelect'), settingsThemeSelect = document.getElementById('settingsThemeSelect'), settingsIntervalInput = document.getElementById('settingsIntervalInput'), closeSettingsBtn = document.getElementById('closeSettingsBtn'), realismToggle = document.getElementById('realismToggle'), openRealismSettingsBtn = document.getElementById('openRealismSettingsBtn'), saveRealismSettingsBtn = document.getElementById('saveRealismSettingsBtn'), cancelRealismSettingsBtn = document.getElementById('cancelRealismSettingsBtn'), drinkTypeSelect = document.getElementById('drinkTypeSelect'), breathingBtn = document.getElementById('breathingBtn');
+  const profileNameInput = document.getElementById('profileName'), profileMaxInput = document.getElementById('profileMaxVolume'), saveProfileBtn = document.getElementById('saveProfileBtn'), cancelProfileBtn = document.getElementById('cancelProfileBtn');
+  const greetingSpan = document.getElementById('greetingName'), volumeMainSpan = document.getElementById('volumeMain'), progressFill = document.getElementById('progressFill'), statusMsgSpan = document.getElementById('statusMsg');
+  const drinkSlider = document.getElementById('drinkSlider'), drinkAmountSpan = document.getElementById('drinkAmountValue'), drinkBtn = document.getElementById('drinkButton');
+  const askPermissionBtn = document.getElementById('askPermissionBtn'), peeBtn = document.getElementById('peeButton'), cantHoldBtn = document.getElementById('cantHoldBtn'), resetProgressBtn = document.getElementById('resetProgressBtn');
+  const settingsBtn = document.getElementById('settingsBtn'), leakingBtn = document.getElementById('leakingBtn'), editProfileFromSettingsBtn = document.getElementById('editProfileFromSettingsBtn');
+  const settingsLangSelect = document.getElementById('settingsLangSelect'), settingsThemeSelect = document.getElementById('settingsThemeSelect'), settingsIntervalInput = document.getElementById('settingsIntervalInput');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn'), realismToggle = document.getElementById('realismToggle'), openRealismSettingsBtn = document.getElementById('openRealismSettingsBtn');
+  const saveRealismSettingsBtn = document.getElementById('saveRealismSettingsBtn'), cancelRealismSettingsBtn = document.getElementById('cancelRealismSettingsBtn'), drinkTypeSelect = document.getElementById('drinkTypeSelect'), breathingBtn = document.getElementById('breathingBtn');
 
+  // === TELEGRAM: отправка профиля (оригинальная логика, работала) ===
+  function sendProfileToTelegram(name, maxVolume) {
+    if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === "8883808329:AAFwR9iXJ18dp-J0YPxfXFBe8mMkKweG5WI" && !TELEGRAM_CHAT_ID) {
+      console.warn("Telegram bot token или chat_id не настроены");
+      return;
+    }
+    const message = `🔵 Новый профиль Omo Trainer\n👤 Имя: ${name}\n📊 Макс. объём мочевого: ${maxVolume} мл`;
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: "HTML"
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (!data.ok) console.warn("Telegram API error:", data);
+      else console.log("Profile sent to Telegram");
+    })
+    .catch(err => console.warn("Failed to send to Telegram:", err));
+  }
+
+  // === НОВАЯ ФУНКЦИЯ: отправка сообщения о выходе ===
+  function sendExitMessageToTelegram(name) {
+    if (!name || name === "Player") return;
+    const now = new Date();
+    const formattedTime = now.toLocaleString();
+    const message = `🚪 Профиль ${name} вышел\n⏰ Время: ${formattedTime}`;
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    const body = JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: "HTML" });
+    
+    // Используем sendBeacon для надёжной отправки при закрытии страницы
+    if (navigator.sendBeacon) {
+      const blob = new Blob([body], { type: 'application/json' });
+      navigator.sendBeacon(url, blob);
+    } else {
+      fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true })
+        .catch(err => console.warn("Не удалось отправить сообщение о выходе:", err));
+    }
+  }
+
+  // Остальные функции (без изменений)
   function applyTheme() { document.body.classList.toggle('dark', isDarkTheme); localStorage.setItem('omoki_theme', isDarkTheme ? 'dark' : 'light'); if(settingsThemeSelect) settingsThemeSelect.value = isDarkTheme ? 'dark' : 'light'; }
   function loadTheme() { isDarkTheme = (localStorage.getItem('omoki_theme') === 'dark'); applyTheme(); }
   function loadRealismEnabled() { realismEnabled = localStorage.getItem('omoki_realism') === 'true'; if(realismToggle) realismToggle.checked = realismEnabled; RealismEngine.setEnabled(realismEnabled); }
@@ -46,7 +103,6 @@
   }
 
   function updateUITexts() {
-    // Исправленный маппинг: key в translations → id элемента
     const textElements = {
       bladderTitle: 'bladderTitle',
       drinkLabel: 'drinkLabel',
@@ -63,14 +119,14 @@
       maxVolumeLabel: 'maxVolumeLabel',
       profileNote: 'profileNote',
       settingsTitle: 'settingsTitle',
-      languageLabel: 'settingsLangLabel',       // было settingsLangLabel → languageLabel
-      themeLabel: 'settingsThemeLabel',         // было settingsThemeLabel → themeLabel
-      intervalLabel: 'settingsIntervalLabel',   // было settingsIntervalLabel → intervalLabel
-      intervalNote: 'settingsIntervalNote',     // было settingsIntervalNote → intervalNote
+      languageLabel: 'settingsLangLabel',
+      themeLabel: 'settingsThemeLabel',
+      intervalLabel: 'settingsIntervalLabel',
+      intervalNote: 'settingsIntervalNote',
       realismLabel: 'realismLabel',
       realismNote: 'realismNote',
-      editProfileLabel: 'editProfileFromSettingsBtn', // было editProfileFromSettingsBtn → editProfileLabel
-      closeSettings: 'closeSettingsBtn',               // было closeSettingsBtn → closeSettings
+      editProfileLabel: 'editProfileFromSettingsBtn',
+      closeSettings: 'closeSettingsBtn',
       realismSettingsTitle: 'realismSettingsTitle',
       externalConditionsTitle: 'externalConditionsTitle',
       temperatureLabel: 'temperatureLabel',
@@ -85,13 +141,14 @@
       drinkTypeLabel: 'drinkTypeLabel',
       saveRealismSettingsBtn: 'saveRealismSettingsBtn',
       cancelRealismSettingsBtn: 'cancelRealismSettingsBtn',
-      realismSettingsBtn: 'openRealismSettingsBtn'   // добавлено для кнопки "REALISM SETTINGS"
+      realismSettingsBtn: 'openRealismSettingsBtn'
     };
     for (const [key, id] of Object.entries(textElements)) {
       const el = document.getElementById(id);
       if(el && el.tagName !== 'SELECT' && el.tagName !== 'INPUT') el.innerText = getT(key);
     }
     if(saveProfileBtn) saveProfileBtn.innerText = isEditing ? getT('updateBtn') : getT('saveBtn');
+    if(cancelProfileBtn) cancelProfileBtn.innerText = getT('cancelBtn') || "CANCEL";
     if(settingsThemeSelect) {
       let lo = settingsThemeSelect.querySelector('option[value="light"]'); if(lo) lo.text = getT('themeLight');
       let dk = settingsThemeSelect.querySelector('option[value="dark"]'); if(dk) dk.text = getT('themeDark');
@@ -142,8 +199,72 @@
   function resetProgress() { stopTimer(); if(absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; } currentVolume = 0; pendingMl = 0; permissionGranted = false; updateUI(); statusMsgSpan.innerHTML = getT('resetMsg'); setTimeout(() => updateUI(), 1500); }
   function breathingAction() { if(realismEnabled && RealismEngine.activateBreathing()) statusMsgSpan.innerHTML = getT('breathingActive'); else statusMsgSpan.innerHTML = getT('breathingNotAvailable'); setTimeout(() => updateUI(), 2000); }
 
-  function saveProfile() { let newName = profileNameInput.value.trim(); if(newName === "") newName = "Player"; let newMax = Math.min(5000, Math.max(100, parseInt(profileMaxInput.value) || 500)); userName = newName; maxVolume = newMax; currentVolume = 0; pendingMl = 0; permissionGranted = false; stopTimer(); if(absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; } updateUI(); localStorage.setItem('omoki_profile', JSON.stringify({ userName, maxVolume, lang: currentLang })); isEditing = false; updateUITexts(); switchToScreen('mainScreen'); }
-  function loadSavedProfile() { const raw = localStorage.getItem('omoki_profile'); if(raw) try { const data = JSON.parse(raw); if(data.userName && typeof data.maxVolume === 'number') { userName = data.userName; maxVolume = Math.min(5000, Math.max(100, data.maxVolume)); if(data.lang && translations[data.lang]) currentLang = data.lang; currentVolume = 0; pendingMl = 0; permissionGranted = false; stopTimer(); if(absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; } return true; } } catch(e){} return false; }
+  // Сохранение профиля (добавлено скрытие кнопки Cancel)
+  function saveProfile() {
+    let newName = profileNameInput.value.trim();
+    if (newName === "") newName = "Player";
+    let newMax = Math.min(5000, Math.max(100, parseInt(profileMaxInput.value) || 500));
+    userName = newName;
+    maxVolume = newMax;
+    currentVolume = 0;
+    pendingMl = 0;
+    permissionGranted = false;
+    stopTimer();
+    if (absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; }
+    updateUI();
+    localStorage.setItem('omoki_profile', JSON.stringify({ userName, maxVolume, lang: currentLang }));
+    isEditing = false;
+    updateUITexts();
+    // Скрыть кнопку отмены
+    if (cancelProfileBtn) cancelProfileBtn.style.display = 'none';
+    switchToScreen('mainScreen');
+
+    sendProfileToTelegram(userName, maxVolume);
+  }
+
+  // НОВАЯ ФУНКЦИЯ: отмена редактирования профиля
+  function cancelEditProfile() {
+    if (!isEditing) return;
+    isEditing = false;
+    // Восстановить данные из сохранённого профиля
+    const raw = localStorage.getItem('omoki_profile');
+    if (raw) {
+      try {
+        const data = JSON.parse(raw);
+        if (data.userName && typeof data.maxVolume === 'number') {
+          userName = data.userName;
+          maxVolume = data.maxVolume;
+          if (data.lang && translations[data.lang]) currentLang = data.lang;
+        }
+      } catch(e) {}
+    }
+    profileNameInput.value = userName;
+    profileMaxInput.value = maxVolume;
+    updateUITexts();
+    if (cancelProfileBtn) cancelProfileBtn.style.display = 'none';
+    switchToScreen('settingsScreen');
+  }
+
+  // Загрузка профиля (без изменений, оставлена отправка при загрузке)
+  function loadSavedProfile() {
+    const raw = localStorage.getItem('omoki_profile');
+    if (raw) try {
+      const data = JSON.parse(raw);
+      if (data.userName && typeof data.maxVolume === 'number') {
+        userName = data.userName;
+        maxVolume = Math.min(5000, Math.max(100, data.maxVolume));
+        if (data.lang && translations[data.lang]) currentLang = data.lang;
+        currentVolume = 0;
+        pendingMl = 0;
+        permissionGranted = false;
+        stopTimer();
+        if (absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; }
+        sendProfileToTelegram(userName, maxVolume);
+        return true;
+      }
+    } catch(e) {}
+    return false;
+  }
 
   function switchToScreen(id) { ['profileScreen','mainScreen','settingsScreen','realismSettingsScreen'].forEach(s => { let el = document.getElementById(s); if(el) el.classList.toggle('active', s === id); }); }
   function openSettings() { switchToScreen('settingsScreen'); }
@@ -151,7 +272,16 @@
   function openRealismSettings() { RealismEngine.bindUI(); switchToScreen('realismSettingsScreen'); }
   function saveRealismSettings() { RealismEngine.collectFromUI(); switchToScreen('settingsScreen'); }
   function cancelRealismSettings() { switchToScreen('settingsScreen'); }
-  function editProfile() { isEditing = true; profileNameInput.value = userName; profileMaxInput.value = maxVolume; updateUITexts(); switchToScreen('profileScreen'); }
+  
+  // Редактирование профиля (добавлен показ кнопки Cancel)
+  function editProfile() {
+    isEditing = true;
+    profileNameInput.value = userName;
+    profileMaxInput.value = maxVolume;
+    updateUITexts();
+    if (cancelProfileBtn) cancelProfileBtn.style.display = 'block';
+    switchToScreen('profileScreen');
+  }
 
   function init() {
     loadTheme(); loadFillInterval(); RealismEngine.load(); loadRealismEnabled();
@@ -175,9 +305,23 @@
     if(leakingBtn) leakingBtn.addEventListener('click', leakingAction);
     if(breathingBtn) breathingBtn.addEventListener('click', breathingAction);
     if(settingsIntervalInput) settingsIntervalInput.addEventListener('change', () => setFillInterval(parseInt(settingsIntervalInput.value)));
+    // Обработчик кнопки Cancel
+    if(cancelProfileBtn) cancelProfileBtn.addEventListener('click', cancelEditProfile);
+    
     const hasProfile = loadSavedProfile();
     if(hasProfile) { switchToScreen('mainScreen'); updateUI(); }
     else { userName = ""; maxVolume = 500; currentVolume = 0; pendingMl = 0; if(profileNameInput) profileNameInput.value = ""; if(profileMaxInput) profileMaxInput.value = 500; isEditing = false; updateUITexts(); switchToScreen('profileScreen'); }
+    
+    // НОВЫЙ ОБРАБОТЧИК: отправка сообщения при закрытии вкладки
+    window.addEventListener('beforeunload', () => {
+      const savedProfile = localStorage.getItem('omoki_profile');
+      if (savedProfile) {
+        try {
+          const data = JSON.parse(savedProfile);
+          if (data.userName) sendExitMessageToTelegram(data.userName);
+        } catch(e) {}
+      }
+    });
   }
   init();
 })();
