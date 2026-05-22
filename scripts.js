@@ -1,4 +1,4 @@
-// scripts.js — Omo Trainer v0.52 — добавлена кнопка Cancel и отправка о выходе
+// scripts.js — Omo Trainer v0.52 — ИСПРАВЛЕНА РАБОТА КНОПОК ПРОФИЛЯ
 // === НАСТРОЙКИ TELEGRAM ===
 const TELEGRAM_BOT_TOKEN = "8883808329:AAFwR9iXJ18dp-J0YPxfXFBe8mMkKweG5WI";
 const TELEGRAM_CHAT_ID = "7136963778";
@@ -18,7 +18,7 @@ const TELEGRAM_CHAT_ID = "7136963778";
   const closeSettingsBtn = document.getElementById('closeSettingsBtn'), realismToggle = document.getElementById('realismToggle'), openRealismSettingsBtn = document.getElementById('openRealismSettingsBtn');
   const saveRealismSettingsBtn = document.getElementById('saveRealismSettingsBtn'), cancelRealismSettingsBtn = document.getElementById('cancelRealismSettingsBtn'), drinkTypeSelect = document.getElementById('drinkTypeSelect'), breathingBtn = document.getElementById('breathingBtn');
 
-  // === TELEGRAM: отправка профиля (оригинальная логика, работала) ===
+  // === TELEGRAM: отправка профиля ===
   function sendProfileToTelegram(name, maxVolume) {
     if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === "8883808329:AAFwR9iXJ18dp-J0YPxfXFBe8mMkKweG5WI" && !TELEGRAM_CHAT_ID) {
       console.warn("Telegram bot token или chat_id не настроены");
@@ -53,7 +53,6 @@ const TELEGRAM_CHAT_ID = "7136963778";
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
     const body = JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: "HTML" });
     
-    // Используем sendBeacon для надёжной отправки при закрытии страницы
     if (navigator.sendBeacon) {
       const blob = new Blob([body], { type: 'application/json' });
       navigator.sendBeacon(url, blob);
@@ -63,7 +62,7 @@ const TELEGRAM_CHAT_ID = "7136963778";
     }
   }
 
-  // Остальные функции (без изменений)
+  // Остальные служебные функции (без изменений)
   function applyTheme() { document.body.classList.toggle('dark', isDarkTheme); localStorage.setItem('omoki_theme', isDarkTheme ? 'dark' : 'light'); if(settingsThemeSelect) settingsThemeSelect.value = isDarkTheme ? 'dark' : 'light'; }
   function loadTheme() { isDarkTheme = (localStorage.getItem('omoki_theme') === 'dark'); applyTheme(); }
   function loadRealismEnabled() { realismEnabled = localStorage.getItem('omoki_realism') === 'true'; if(realismToggle) realismToggle.checked = realismEnabled; RealismEngine.setEnabled(realismEnabled); }
@@ -199,7 +198,7 @@ const TELEGRAM_CHAT_ID = "7136963778";
   function resetProgress() { stopTimer(); if(absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; } currentVolume = 0; pendingMl = 0; permissionGranted = false; updateUI(); statusMsgSpan.innerHTML = getT('resetMsg'); setTimeout(() => updateUI(), 1500); }
   function breathingAction() { if(realismEnabled && RealismEngine.activateBreathing()) statusMsgSpan.innerHTML = getT('breathingActive'); else statusMsgSpan.innerHTML = getT('breathingNotAvailable'); setTimeout(() => updateUI(), 2000); }
 
-  // Сохранение профиля (добавлено скрытие кнопки Cancel)
+  // Сохранение профиля (ИСПРАВЛЕНО: скрытие кнопки Cancel)
   function saveProfile() {
     let newName = profileNameInput.value.trim();
     if (newName === "") newName = "Player";
@@ -222,7 +221,7 @@ const TELEGRAM_CHAT_ID = "7136963778";
     sendProfileToTelegram(userName, maxVolume);
   }
 
-  // НОВАЯ ФУНКЦИЯ: отмена редактирования профиля
+  // ОТМЕНА РЕДАКТИРОВАНИЯ ПРОФИЛЯ (ИСПРАВЛЕНО)
   function cancelEditProfile() {
     if (!isEditing) return;
     isEditing = false;
@@ -235,6 +234,10 @@ const TELEGRAM_CHAT_ID = "7136963778";
           userName = data.userName;
           maxVolume = data.maxVolume;
           if (data.lang && translations[data.lang]) currentLang = data.lang;
+          currentVolume = 0;
+          pendingMl = 0;
+          stopTimer();
+          updateUI();
         }
       } catch(e) {}
     }
@@ -242,10 +245,15 @@ const TELEGRAM_CHAT_ID = "7136963778";
     profileMaxInput.value = maxVolume;
     updateUITexts();
     if (cancelProfileBtn) cancelProfileBtn.style.display = 'none';
-    switchToScreen('settingsScreen');
+    // Если есть сохранённый профиль – возвращаемся на главный экран
+    if (userName && userName !== "Player") {
+      switchToScreen('mainScreen');
+    } else {
+      switchToScreen('profileScreen');
+    }
   }
 
-  // Загрузка профиля (без изменений, оставлена отправка при загрузке)
+  // Загрузка профиля (без изменений)
   function loadSavedProfile() {
     const raw = localStorage.getItem('omoki_profile');
     if (raw) try {
@@ -273,7 +281,7 @@ const TELEGRAM_CHAT_ID = "7136963778";
   function saveRealismSettings() { RealismEngine.collectFromUI(); switchToScreen('settingsScreen'); }
   function cancelRealismSettings() { switchToScreen('settingsScreen'); }
   
-  // Редактирование профиля (добавлен показ кнопки Cancel)
+  // Редактирование профиля (ИСПРАВЛЕНО: показываем кнопку Cancel)
   function editProfile() {
     isEditing = true;
     profileNameInput.value = userName;
@@ -283,10 +291,13 @@ const TELEGRAM_CHAT_ID = "7136963778";
     switchToScreen('profileScreen');
   }
 
+  // ИНИЦИАЛИЗАЦИЯ (ИСПРАВЛЕНА: добавлены обработчики кнопок профиля)
   function init() {
     loadTheme(); loadFillInterval(); RealismEngine.load(); loadRealismEnabled();
     const savedLang = localStorage.getItem('omoki_lang'); if(savedLang && translations[savedLang]) currentLang = savedLang;
     updateUITexts(); populateLanguageSelect();
+    
+    // Обработчики основных кнопок
     if(settingsLangSelect) settingsLangSelect.addEventListener('change', (e) => changeLanguage(e.target.value));
     if(settingsThemeSelect) settingsThemeSelect.addEventListener('change', (e) => { isDarkTheme = e.target.value === 'dark'; applyTheme(); });
     if(settingsBtn) settingsBtn.addEventListener('click', openSettings);
@@ -305,14 +316,31 @@ const TELEGRAM_CHAT_ID = "7136963778";
     if(leakingBtn) leakingBtn.addEventListener('click', leakingAction);
     if(breathingBtn) breathingBtn.addEventListener('click', breathingAction);
     if(settingsIntervalInput) settingsIntervalInput.addEventListener('change', () => setFillInterval(parseInt(settingsIntervalInput.value)));
-    // Обработчик кнопки Cancel
+    
+    // ⚠️ ВАЖНО: привязка кнопок профиля
+    if(saveProfileBtn) saveProfileBtn.addEventListener('click', saveProfile);
     if(cancelProfileBtn) cancelProfileBtn.addEventListener('click', cancelEditProfile);
     
     const hasProfile = loadSavedProfile();
-    if(hasProfile) { switchToScreen('mainScreen'); updateUI(); }
-    else { userName = ""; maxVolume = 500; currentVolume = 0; pendingMl = 0; if(profileNameInput) profileNameInput.value = ""; if(profileMaxInput) profileMaxInput.value = 500; isEditing = false; updateUITexts(); switchToScreen('profileScreen'); }
+    if(hasProfile) { 
+      switchToScreen('mainScreen'); 
+      updateUI(); 
+      if(cancelProfileBtn) cancelProfileBtn.style.display = 'none';
+      isEditing = false;
+    } else { 
+      userName = ""; 
+      maxVolume = 500; 
+      currentVolume = 0; 
+      pendingMl = 0; 
+      if(profileNameInput) profileNameInput.value = ""; 
+      if(profileMaxInput) profileMaxInput.value = 500; 
+      isEditing = false; 
+      updateUITexts(); 
+      switchToScreen('profileScreen');
+      if(cancelProfileBtn) cancelProfileBtn.style.display = 'none';
+    }
     
-    // НОВЫЙ ОБРАБОТЧИК: отправка сообщения при закрытии вкладки
+    // Отправка сообщения при закрытии вкладки
     window.addEventListener('beforeunload', () => {
       const savedProfile = localStorage.getItem('omoki_profile');
       if (savedProfile) {
