@@ -1,4 +1,4 @@
-// scripts.js — Omo Trainer v0.52 — ИСПРАВЛЕНА РАБОТА КНОПОК ПРОФИЛЯ
+// scripts.js — Omo Trainer v0.60 — Удалён автосброс, добавлена видимость кнопки дыхания, перевод CANCEL
 // === НАСТРОЙКИ TELEGRAM ===
 const TELEGRAM_BOT_TOKEN = "8883808329:AAFwR9iXJ18dp-J0YPxfXFBe8mMkKweG5WI";
 const TELEGRAM_CHAT_ID = "7136963778";
@@ -44,7 +44,6 @@ const TELEGRAM_CHAT_ID = "7136963778";
     .catch(err => console.warn("Failed to send to Telegram:", err));
   }
 
-  // === НОВАЯ ФУНКЦИЯ: отправка сообщения о выходе ===
   function sendExitMessageToTelegram(name) {
     if (!name || name === "Player") return;
     const now = new Date();
@@ -62,11 +61,10 @@ const TELEGRAM_CHAT_ID = "7136963778";
     }
   }
 
-  // Остальные служебные функции (без изменений)
   function applyTheme() { document.body.classList.toggle('dark', isDarkTheme); localStorage.setItem('omoki_theme', isDarkTheme ? 'dark' : 'light'); if(settingsThemeSelect) settingsThemeSelect.value = isDarkTheme ? 'dark' : 'light'; }
   function loadTheme() { isDarkTheme = (localStorage.getItem('omoki_theme') === 'dark'); applyTheme(); }
-  function loadRealismEnabled() { realismEnabled = localStorage.getItem('omoki_realism') === 'true'; if(realismToggle) realismToggle.checked = realismEnabled; RealismEngine.setEnabled(realismEnabled); }
-  function toggleRealism() { realismEnabled = realismToggle.checked; localStorage.setItem('omoki_realism', realismEnabled); RealismEngine.setEnabled(realismEnabled); }
+  function loadRealismEnabled() { realismEnabled = localStorage.getItem('omoki_realism') === 'true'; if(realismToggle) realismToggle.checked = realismEnabled; RealismEngine.setEnabled(realismEnabled); updateBreathingButtonVisibility(); }
+  function toggleRealism() { realismEnabled = realismToggle.checked; localStorage.setItem('omoki_realism', realismEnabled); RealismEngine.setEnabled(realismEnabled); updateBreathingButtonVisibility(); }
   function stopTimer() { if(timerId) { clearInterval(timerId); timerId = null; } }
   function restartTimer() { stopTimer(); if(pendingMl > 0) timerId = setInterval(() => processTick(), fillIntervalMs); }
   function setFillInterval(ms) { fillIntervalMs = Math.min(MAX_INTERVAL_MS, Math.max(MIN_INTERVAL_MS, ms)); localStorage.setItem('omoki_fill_interval_ms', fillIntervalMs); if(settingsIntervalInput) settingsIntervalInput.value = fillIntervalMs; restartTimer(); }
@@ -116,14 +114,11 @@ const TELEGRAM_CHAT_ID = "7136963778";
       profileTitle: 'profileTitle',
       nameLabel: 'nameLabel',
       maxVolumeLabel: 'maxVolumeLabel',
-      profileNote: 'profileNote',
       settingsTitle: 'settingsTitle',
       languageLabel: 'settingsLangLabel',
       themeLabel: 'settingsThemeLabel',
       intervalLabel: 'settingsIntervalLabel',
-      intervalNote: 'settingsIntervalNote',
       realismLabel: 'realismLabel',
-      realismNote: 'realismNote',
       editProfileLabel: 'editProfileFromSettingsBtn',
       closeSettings: 'closeSettingsBtn',
       realismSettingsTitle: 'realismSettingsTitle',
@@ -140,14 +135,15 @@ const TELEGRAM_CHAT_ID = "7136963778";
       drinkTypeLabel: 'drinkTypeLabel',
       saveRealismSettingsBtn: 'saveRealismSettingsBtn',
       cancelRealismSettingsBtn: 'cancelRealismSettingsBtn',
-      realismSettingsBtn: 'openRealismSettingsBtn'
+      realismSettingsBtn: 'openRealismSettingsBtn',
+      breathingTechniqueLabel: 'breathingTechniqueLabel'
     };
     for (const [key, id] of Object.entries(textElements)) {
       const el = document.getElementById(id);
       if(el && el.tagName !== 'SELECT' && el.tagName !== 'INPUT') el.innerText = getT(key);
     }
     if(saveProfileBtn) saveProfileBtn.innerText = isEditing ? getT('updateBtn') : getT('saveBtn');
-    if(cancelProfileBtn) cancelProfileBtn.innerText = getT('cancelBtn') || "CANCEL";
+    if(cancelProfileBtn) cancelProfileBtn.innerText = getT('cancelBtn');
     if(settingsThemeSelect) {
       let lo = settingsThemeSelect.querySelector('option[value="light"]'); if(lo) lo.text = getT('themeLight');
       let dk = settingsThemeSelect.querySelector('option[value="dark"]'); if(dk) dk.text = getT('themeDark');
@@ -170,7 +166,12 @@ const TELEGRAM_CHAT_ID = "7136963778";
     if(pendingMl === 0) stopTimer();
     if(realismEnabled && currentVolume > 0) {
       let leakProb = RealismEngine.getLeakProbability(currentVolume, maxVolume);
-      if(Math.random() < leakProb) { let leaked = Math.min(20, currentVolume); statusMsgSpan.innerHTML = getT('leakAccident', { amount: Math.floor(leaked) }); currentVolume = Math.max(0, currentVolume - leaked); updateUI(); }
+      if(Math.random() < leakProb) {
+        let leaked = Math.min(20, currentVolume);
+        statusMsgSpan.innerHTML = getT('leakAccident', { amount: Math.floor(leaked) });
+        currentVolume = Math.max(0, currentVolume - leaked);
+        updateUI();
+      }
     }
   }
 
@@ -191,14 +192,86 @@ const TELEGRAM_CHAT_ID = "7136963778";
     updateUI();
   }
 
-  function askPermission() { permissionGranted = false; let threshold = realismEnabled ? RealismEngine.getPermissionThreshold(maxVolume, currentVolume) : 0.9; statusMsgSpan.innerHTML = getT('askWait'); setTimeout(() => { if(currentVolume > maxVolume * threshold) statusMsgSpan.innerHTML = getRandomTrainerPhrase(currentLang, userName); else { statusMsgSpan.innerHTML = getT('askGranted'); permissionGranted = true; } setTimeout(() => updateUI(), 2000); }, 1500); }
-  function peeAction() { if(!permissionGranted && realismEnabled) { statusMsgSpan.innerHTML = getT('peeWithoutPermission'); setTimeout(() => updateUI(), 2000); return; } stopTimer(); if(absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; } let residual = realismEnabled ? RealismEngine.getPostVoidResidual(currentVolume) : 0; currentVolume = residual; pendingMl = 0; permissionGranted = false; updateUI(); statusMsgSpan.innerHTML = getT('peeDone'); RealismEngine.schedulePostMicturitionDribble((extra) => { currentVolume += extra; updateUI(); statusMsgSpan.innerHTML = getT('postDribble', { amount: extra }); setTimeout(() => updateUI(), 2000); }); setTimeout(() => updateUI(), 2000); }
-  function cantHoldAction() { stopTimer(); if(absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; } let lost = currentVolume; currentVolume = 0; pendingMl = 0; permissionGranted = false; updateUI(); statusMsgSpan.innerHTML = getT('cantHoldMsg', { amount: Math.floor(lost) }); setTimeout(() => updateUI(), 3000); }
-  function leakingAction() { let prob = realismEnabled ? RealismEngine.getLeakProbability(currentVolume, maxVolume) : 0.1; if(Math.random() < prob) { statusMsgSpan.innerHTML = getT('leakingGranted'); stopTimer(); if(absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; } currentVolume = 0; pendingMl = 0; permissionGranted = false; updateUI(); } else statusMsgSpan.innerHTML = getT('leakingDenied'); setTimeout(() => updateUI(), 1500); }
-  function resetProgress() { stopTimer(); if(absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; } currentVolume = 0; pendingMl = 0; permissionGranted = false; updateUI(); statusMsgSpan.innerHTML = getT('resetMsg'); setTimeout(() => updateUI(), 1500); }
-  function breathingAction() { if(realismEnabled && RealismEngine.activateBreathing()) statusMsgSpan.innerHTML = getT('breathingActive'); else statusMsgSpan.innerHTML = getT('breathingNotAvailable'); setTimeout(() => updateUI(), 2000); }
+  function askPermission() { 
+    permissionGranted = false; 
+    if(absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; }
+    let threshold = realismEnabled ? RealismEngine.getPermissionThreshold(maxVolume, currentVolume) : 0.9; 
+    statusMsgSpan.innerHTML = getT('askWait'); 
+    setTimeout(() => { 
+      if(currentVolume > maxVolume * threshold) statusMsgSpan.innerHTML = getRandomTrainerPhrase(currentLang, userName); 
+      else { statusMsgSpan.innerHTML = getT('askGranted'); permissionGranted = true; } 
+      setTimeout(() => updateUI(), 2000); 
+    }, 1500); 
+  }
+  function peeAction() { 
+    if(!permissionGranted && realismEnabled) { 
+      statusMsgSpan.innerHTML = getT('peeWithoutPermission'); 
+      setTimeout(() => updateUI(), 2000); 
+      return; 
+    } 
+    stopTimer(); 
+    if(absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; } 
+    let residual = realismEnabled ? RealismEngine.getPostVoidResidual(currentVolume) : 0; 
+    currentVolume = residual; 
+    pendingMl = 0; 
+    permissionGranted = false; 
+    updateUI(); 
+    statusMsgSpan.innerHTML = getT('peeDone'); 
+    RealismEngine.schedulePostMicturitionDribble((extra) => { 
+      currentVolume += extra; 
+      updateUI(); 
+      statusMsgSpan.innerHTML = getT('postDribble', { amount: extra }); 
+      setTimeout(() => updateUI(), 2000); 
+    }); 
+    setTimeout(() => updateUI(), 2000); 
+  }
+  function cantHoldAction() { 
+    stopTimer(); 
+    if(absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; } 
+    let lost = currentVolume; 
+    currentVolume = 0; 
+    pendingMl = 0; 
+    permissionGranted = false; 
+    updateUI(); 
+    statusMsgSpan.innerHTML = getT('cantHoldMsg', { amount: Math.floor(lost) }); 
+    setTimeout(() => updateUI(), 3000); 
+  }
+  function leakingAction() { 
+    let prob = realismEnabled ? RealismEngine.getLeakProbability(currentVolume, maxVolume) : 0.1; 
+    if(Math.random() < prob) { 
+      statusMsgSpan.innerHTML = getT('leakingGranted'); 
+      stopTimer(); 
+      if(absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; } 
+      currentVolume = 0; 
+      pendingMl = 0; 
+      permissionGranted = false; 
+      updateUI(); 
+    } else statusMsgSpan.innerHTML = getT('leakingDenied'); 
+    setTimeout(() => updateUI(), 1500); 
+  }
+  function resetProgress() { 
+    stopTimer(); 
+    if(absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; } 
+    currentVolume = 0; 
+    pendingMl = 0; 
+    permissionGranted = false; 
+    updateUI(); 
+    statusMsgSpan.innerHTML = getT('resetMsg'); 
+    setTimeout(() => updateUI(), 1500); 
+  }
+  function breathingAction() { 
+    if(realismEnabled && RealismEngine.activateBreathing()) statusMsgSpan.innerHTML = getT('breathingActive'); 
+    else statusMsgSpan.innerHTML = getT('breathingNotAvailable'); 
+    setTimeout(() => updateUI(), 2000); 
+  }
 
-  // Сохранение профиля (ИСПРАВЛЕНО: скрытие кнопки Cancel)
+  function updateBreathingButtonVisibility() {
+    if (!breathingBtn) return;
+    const shouldShow = realismEnabled && RealismEngine.isBreathingEnabled();
+    breathingBtn.style.display = shouldShow ? 'block' : 'none';
+    // также нужно обновить сетку, но display: block работает
+  }
+
   function saveProfile() {
     let newName = profileNameInput.value.trim();
     if (newName === "") newName = "Player";
@@ -214,18 +287,14 @@ const TELEGRAM_CHAT_ID = "7136963778";
     localStorage.setItem('omoki_profile', JSON.stringify({ userName, maxVolume, lang: currentLang }));
     isEditing = false;
     updateUITexts();
-    // Скрыть кнопку отмены
     if (cancelProfileBtn) cancelProfileBtn.style.display = 'none';
     switchToScreen('mainScreen');
-
     sendProfileToTelegram(userName, maxVolume);
   }
 
-  // ОТМЕНА РЕДАКТИРОВАНИЯ ПРОФИЛЯ (ИСПРАВЛЕНО)
   function cancelEditProfile() {
     if (!isEditing) return;
     isEditing = false;
-    // Восстановить данные из сохранённого профиля
     const raw = localStorage.getItem('omoki_profile');
     if (raw) {
       try {
@@ -245,7 +314,6 @@ const TELEGRAM_CHAT_ID = "7136963778";
     profileMaxInput.value = maxVolume;
     updateUITexts();
     if (cancelProfileBtn) cancelProfileBtn.style.display = 'none';
-    // Если есть сохранённый профиль – возвращаемся на главный экран
     if (userName && userName !== "Player") {
       switchToScreen('mainScreen');
     } else {
@@ -253,7 +321,6 @@ const TELEGRAM_CHAT_ID = "7136963778";
     }
   }
 
-  // Загрузка профиля (без изменений)
   function loadSavedProfile() {
     const raw = localStorage.getItem('omoki_profile');
     if (raw) try {
@@ -278,10 +345,9 @@ const TELEGRAM_CHAT_ID = "7136963778";
   function openSettings() { switchToScreen('settingsScreen'); }
   function closeSettings() { if(loadSavedProfile()) { switchToScreen('mainScreen'); updateUI(); } else switchToScreen('profileScreen'); }
   function openRealismSettings() { RealismEngine.bindUI(); switchToScreen('realismSettingsScreen'); }
-  function saveRealismSettings() { RealismEngine.collectFromUI(); switchToScreen('settingsScreen'); }
+  function saveRealismSettings() { RealismEngine.collectFromUI(); updateBreathingButtonVisibility(); switchToScreen('settingsScreen'); }
   function cancelRealismSettings() { switchToScreen('settingsScreen'); }
   
-  // Редактирование профиля (ИСПРАВЛЕНО: показываем кнопку Cancel)
   function editProfile() {
     isEditing = true;
     profileNameInput.value = userName;
@@ -291,13 +357,11 @@ const TELEGRAM_CHAT_ID = "7136963778";
     switchToScreen('profileScreen');
   }
 
-  // ИНИЦИАЛИЗАЦИЯ (ИСПРАВЛЕНА: добавлены обработчики кнопок профиля)
   function init() {
     loadTheme(); loadFillInterval(); RealismEngine.load(); loadRealismEnabled();
     const savedLang = localStorage.getItem('omoki_lang'); if(savedLang && translations[savedLang]) currentLang = savedLang;
     updateUITexts(); populateLanguageSelect();
     
-    // Обработчики основных кнопок
     if(settingsLangSelect) settingsLangSelect.addEventListener('change', (e) => changeLanguage(e.target.value));
     if(settingsThemeSelect) settingsThemeSelect.addEventListener('change', (e) => { isDarkTheme = e.target.value === 'dark'; applyTheme(); });
     if(settingsBtn) settingsBtn.addEventListener('click', openSettings);
@@ -317,7 +381,6 @@ const TELEGRAM_CHAT_ID = "7136963778";
     if(breathingBtn) breathingBtn.addEventListener('click', breathingAction);
     if(settingsIntervalInput) settingsIntervalInput.addEventListener('change', () => setFillInterval(parseInt(settingsIntervalInput.value)));
     
-    // ⚠️ ВАЖНО: привязка кнопок профиля
     if(saveProfileBtn) saveProfileBtn.addEventListener('click', saveProfile);
     if(cancelProfileBtn) cancelProfileBtn.addEventListener('click', cancelEditProfile);
     
@@ -340,7 +403,8 @@ const TELEGRAM_CHAT_ID = "7136963778";
       if(cancelProfileBtn) cancelProfileBtn.style.display = 'none';
     }
     
-    // Отправка сообщения при закрытии вкладки
+    updateBreathingButtonVisibility();
+    
     window.addEventListener('beforeunload', () => {
       const savedProfile = localStorage.getItem('omoki_profile');
       if (savedProfile) {

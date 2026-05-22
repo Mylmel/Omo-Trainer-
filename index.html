@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Omo Trainer v0.53</title>
+  <title>Omo Trainer v0.60</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -17,9 +17,7 @@
       <label id="maxVolumeLabel" for="profileMaxVolume">Maximum bladder volume (ml, goal)</label>
       <input type="number" id="profileMaxVolume" value="500" min="100" max="5000" step="10">
       <button id="saveProfileBtn">Create / Start</button>
-      <!-- Кнопка отмены (изначально скрыта) -->
       <button id="cancelProfileBtn" style="display: none;">CANCEL</button>
-      <div id="profileNote" class="note">You can drink above the limit – no restrictions.</div>
     </div>
   </div>
 
@@ -28,7 +26,7 @@
     <div class="card">
       <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
         <div class="user-name" id="greetingName">player</div>
-        <div class="version-top">v0.53</div>
+        <div class="version-top">v0.60</div>
       </div>
       <h2 id="bladderTitle">Bladder</h2>
       <div class="volume-digits">
@@ -60,7 +58,7 @@
         <button id="peeButton">PEE</button>
         <button id="cantHoldBtn">I CAN'T HOLD IT!</button>
         <button id="leakingBtn">LEAKING</button>
-        <button id="breathingBtn">DEEP BREATHING</button>
+        <button id="breathingBtn" style="display: none;">DEEP BREATHING</button>
       </div>
 
       <div class="double-buttons">
@@ -92,12 +90,10 @@
           <span class="slider-round"></span>
         </label>
         <button id="openRealismSettingsBtn" class="realism-settings-btn">REALISM SETTINGS</button>
-        <div class="settings-note" id="realismNote">Only 50-70% of liquid reaches the bladder</div>
       </div>
       <div class="settings-row">
         <label id="settingsIntervalLabel" for="settingsIntervalInput">Fill interval (ms per 1 ml)</label>
         <input type="number" id="settingsIntervalInput" min="100" max="60000" step="100" value="3800">
-        <div class="settings-note" id="settingsIntervalNote">Lower value = faster filling</div>
       </div>
       <div class="double-buttons">
         <button id="editProfileFromSettingsBtn">EDIT PROFILE</button>
@@ -148,6 +144,10 @@
         <div class="settings-row checkbox-row">
           <label id="menstrualLabel" for="menstrualToggle">Menstrual cycle</label>
           <input type="checkbox" id="menstrualToggle">
+        </div>
+        <div class="settings-row checkbox-row">
+          <label id="breathingTechniqueLabel" for="breathingTechniqueToggle">Breathing technique</label>
+          <input type="checkbox" id="breathingTechniqueToggle">
         </div>
       </div>
 

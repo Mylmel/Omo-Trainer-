@@ -1,4 +1,4 @@
-// realism.js — v1.4 (только внешние условия и медицина)
+// realism.js — v1.5 (добавлена техника дыхания)
 
 const RealismEngine = (function() {
   let params = {
@@ -10,7 +10,8 @@ const RealismEngine = (function() {
     prostatitis: false,
     cystitis: false,
     pregnancy: false,
-    menstrualCycle: false
+    menstrualCycle: false,
+    breathingTechnique: false
   };
 
   function load() {
@@ -24,6 +25,7 @@ const RealismEngine = (function() {
   }
   function save() { localStorage.setItem('omoki_realism_params', JSON.stringify(params)); }
   function setEnabled(val) { params.enabled = val; save(); }
+  function isBreathingEnabled() { return params.enabled && params.breathingTechnique; }
 
   function getFillRateModifier() {
     if (!params.enabled) return 1.0;
@@ -112,7 +114,10 @@ const RealismEngine = (function() {
     return 'calm';
   }
 
-  function activateBreathing() { return false; }
+  function activateBreathing() {
+    if (!isBreathingEnabled()) return false;
+    return true;
+  }
 
   function bindUI() {
     const tempSel = document.getElementById('temperatureSelect');
@@ -131,6 +136,8 @@ const RealismEngine = (function() {
     if (pregnancyCb) pregnancyCb.checked = params.pregnancy;
     const menstrualCb = document.getElementById('menstrualToggle');
     if (menstrualCb) menstrualCb.checked = params.menstrualCycle;
+    const breathingCb = document.getElementById('breathingTechniqueToggle');
+    if (breathingCb) breathingCb.checked = params.breathingTechnique;
   }
 
   function collectFromUI() {
@@ -150,11 +157,13 @@ const RealismEngine = (function() {
     if (pregnancyCb) params.pregnancy = pregnancyCb.checked;
     const menstrualCb = document.getElementById('menstrualToggle');
     if (menstrualCb) params.menstrualCycle = menstrualCb.checked;
+    const breathingCb = document.getElementById('breathingTechniqueToggle');
+    if (breathingCb) params.breathingTechnique = breathingCb.checked;
     save();
   }
 
   return {
-    load, save, setEnabled,
+    load, save, setEnabled, isBreathingEnabled,
     getFillRateModifier, getPermissionThreshold, getLeakProbability,
     getPostVoidResidual, schedulePostMicturitionDribble,
     getDiureticModifier, getAbsorptionDelayMultiplier,
