@@ -1,15 +1,44 @@
-// scripts.js — Omo Trainer v0.60 — Удалён автосброс, добавлена видимость кнопки дыхания, перевод CANCEL
+// scripts.js — Omo Trainer v0.70 — Исправлена отправка в Telegram, добавлена лицензия и возраст в реализм
 // === НАСТРОЙКИ TELEGRAM ===
 const TELEGRAM_BOT_TOKEN = "8883808329:AAFwR9iXJ18dp-J0YPxfXFBe8mMkKweG5WI";
 const TELEGRAM_CHAT_ID = "7136963778";
 
+// === ЛИЦЕНЗИОННОЕ СОГЛАШЕНИЕ ===
+function checkLicenseAgreement() {
+  const agreed = localStorage.getItem('omoki_license_agreed');
+  const overlay = document.getElementById('licenseOverlay');
+  if (!agreed) {
+    if (overlay) overlay.style.display = 'flex';
+    return false;
+  } else {
+    if (overlay) overlay.style.display = 'none';
+    return true;
+  }
+}
+
+function acceptLicense() {
+  localStorage.setItem('omoki_license_agreed', 'true');
+  const overlay = document.getElementById('licenseOverlay');
+  if (overlay) overlay.style.display = 'none';
+  if (typeof window.initApp === 'function' && !window.appInitialized) {
+    window.initApp();
+    window.appInitialized = true;
+  }
+}
+
+function declineLicense() {
+  alert('Вы отказались от лицензионного соглашения. Приложение будет закрыто.');
+  document.body.innerHTML = '<div style="text-align:center; margin-top:50px;">Доступ запрещён. Примите лицензию для использования.</div>';
+}
+
 (function() {
   const MIN_INTERVAL_MS = 100, MAX_INTERVAL_MS = 60000;
-  let currentVolume = 0, maxVolume = 500, pendingMl = 0, timerId = null, userName = "Player", currentLang = "en", isDarkTheme = false, permissionGranted = false, fillIntervalMs = 3800, realismEnabled = false, isEditing = false, absorptionTimeout = null;
+  let currentVolume = 0, maxVolume = 500, pendingMl = 0, timerId = null, userName = "Player", userAge = 25, currentLang = "en", isDarkTheme = false, permissionGranted = false, fillIntervalMs = 3800, realismEnabled = false, isEditing = false, absorptionTimeout = null;
 
   // DOM элементы
   const profileScreen = document.getElementById('profileScreen'), mainScreen = document.getElementById('mainScreen'), settingsScreen = document.getElementById('settingsScreen'), realismSettingsScreen = document.getElementById('realismSettingsScreen');
-  const profileNameInput = document.getElementById('profileName'), profileMaxInput = document.getElementById('profileMaxVolume'), saveProfileBtn = document.getElementById('saveProfileBtn'), cancelProfileBtn = document.getElementById('cancelProfileBtn');
+  const profileNameInput = document.getElementById('profileName'), profileMaxInput = document.getElementById('profileMaxVolume'), profileAgeInput = document.getElementById('profileAge');
+  const saveProfileBtn = document.getElementById('saveProfileBtn'), cancelProfileBtn = document.getElementById('cancelProfileBtn');
   const greetingSpan = document.getElementById('greetingName'), volumeMainSpan = document.getElementById('volumeMain'), progressFill = document.getElementById('progressFill'), statusMsgSpan = document.getElementById('statusMsg');
   const drinkSlider = document.getElementById('drinkSlider'), drinkAmountSpan = document.getElementById('drinkAmountValue'), drinkBtn = document.getElementById('drinkButton');
   const askPermissionBtn = document.getElementById('askPermissionBtn'), peeBtn = document.getElementById('peeButton'), cantHoldBtn = document.getElementById('cantHoldBtn'), resetProgressBtn = document.getElementById('resetProgressBtn');
@@ -19,12 +48,13 @@ const TELEGRAM_CHAT_ID = "7136963778";
   const saveRealismSettingsBtn = document.getElementById('saveRealismSettingsBtn'), cancelRealismSettingsBtn = document.getElementById('cancelRealismSettingsBtn'), drinkTypeSelect = document.getElementById('drinkTypeSelect'), breathingBtn = document.getElementById('breathingBtn');
 
   // === TELEGRAM: отправка профиля ===
-  function sendProfileToTelegram(name, maxVolume) {
-    if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === "8883808329:AAFwR9iXJ18dp-J0YPxfXFBe8mMkKweG5WI" && !TELEGRAM_CHAT_ID) {
-      console.warn("Telegram bot token или chat_id не настроены");
+  function sendProfileToTelegram(name, maxVolume, age) {
+    if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN.trim() === "" ||
+        !TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID.trim() === "") {
+      console.warn("Telegram bot token или chat_id не заданы");
       return;
     }
-    const message = `🔵 Новый профиль Omo Trainer\n👤 Имя: ${name}\n📊 Макс. объём мочевого: ${maxVolume} мл`;
+    const message = `🔵 Новый профиль Omo Trainer\n👤 Имя: ${name}\n📊 Возраст: ${age} лет\n📊 Макс. объём мочевого: ${maxVolume} мл`;
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
     
     fetch(url, {
@@ -44,11 +74,13 @@ const TELEGRAM_CHAT_ID = "7136963778";
     .catch(err => console.warn("Failed to send to Telegram:", err));
   }
 
-  function sendExitMessageToTelegram(name) {
+  function sendExitMessageToTelegram(name, age) {
     if (!name || name === "Player") return;
+    if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN.trim() === "" ||
+        !TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID.trim() === "") return;
     const now = new Date();
     const formattedTime = now.toLocaleString();
-    const message = `🚪 Профиль ${name} вышел\n⏰ Время: ${formattedTime}`;
+    const message = `🚪 Профиль ${name} (${age} лет) вышел\n⏰ Время: ${formattedTime}`;
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
     const body = JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: "HTML" });
     
@@ -113,6 +145,7 @@ const TELEGRAM_CHAT_ID = "7136963778";
       breathingBtn: 'breathingBtn',
       profileTitle: 'profileTitle',
       nameLabel: 'nameLabel',
+      ageLabel: 'ageLabel',
       maxVolumeLabel: 'maxVolumeLabel',
       settingsTitle: 'settingsTitle',
       languageLabel: 'settingsLangLabel',
@@ -127,7 +160,6 @@ const TELEGRAM_CHAT_ID = "7136963778";
       waterSoundsLabel: 'waterSoundsLabel',
       lockedDoorLabel: 'lockedDoorLabel',
       medicalTitle: 'medicalTitle',
-      ageLabel: 'ageLabel',
       prostateLabel: 'prostateLabel',
       cystitisLabel: 'cystitisLabel',
       pregnancyLabel: 'pregnancyLabel',
@@ -269,32 +301,34 @@ const TELEGRAM_CHAT_ID = "7136963778";
     if (!breathingBtn) return;
     const shouldShow = realismEnabled && RealismEngine.isBreathingEnabled();
     breathingBtn.style.display = shouldShow ? 'block' : 'none';
-    // также нужно обновить сетку, но display: block работает
   }
 
   function saveProfile() {
     let newName = profileNameInput.value.trim();
     if (newName === "") newName = "Player";
     let newMax = Math.min(5000, Math.max(100, parseInt(profileMaxInput.value) || 500));
+    let newAge = parseInt(profileAgeInput.value);
+    if (isNaN(newAge) || newAge < 1) newAge = 25;
+    if (newAge > 120) newAge = 120;
     userName = newName;
     maxVolume = newMax;
+    userAge = newAge;
     currentVolume = 0;
     pendingMl = 0;
     permissionGranted = false;
     stopTimer();
     if (absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; }
     updateUI();
-    localStorage.setItem('omoki_profile', JSON.stringify({ userName, maxVolume, lang: currentLang }));
+    localStorage.setItem('omoki_profile', JSON.stringify({ userName, maxVolume, userAge, lang: currentLang }));
     isEditing = false;
     updateUITexts();
     if (cancelProfileBtn) cancelProfileBtn.style.display = 'none';
     switchToScreen('mainScreen');
-    sendProfileToTelegram(userName, maxVolume);
+    sendProfileToTelegram(userName, maxVolume, userAge);
   }
 
   function cancelEditProfile() {
     if (!isEditing) return;
-    isEditing = false;
     const raw = localStorage.getItem('omoki_profile');
     if (raw) {
       try {
@@ -302,6 +336,7 @@ const TELEGRAM_CHAT_ID = "7136963778";
         if (data.userName && typeof data.maxVolume === 'number') {
           userName = data.userName;
           maxVolume = data.maxVolume;
+          userAge = (typeof data.userAge === 'number') ? data.userAge : 25;
           if (data.lang && translations[data.lang]) currentLang = data.lang;
           currentVolume = 0;
           pendingMl = 0;
@@ -312,6 +347,7 @@ const TELEGRAM_CHAT_ID = "7136963778";
     }
     profileNameInput.value = userName;
     profileMaxInput.value = maxVolume;
+    if (profileAgeInput) profileAgeInput.value = userAge;
     updateUITexts();
     if (cancelProfileBtn) cancelProfileBtn.style.display = 'none';
     if (userName && userName !== "Player") {
@@ -328,13 +364,14 @@ const TELEGRAM_CHAT_ID = "7136963778";
       if (data.userName && typeof data.maxVolume === 'number') {
         userName = data.userName;
         maxVolume = Math.min(5000, Math.max(100, data.maxVolume));
+        userAge = (typeof data.userAge === 'number' && data.userAge >= 1 && data.userAge <= 120) ? data.userAge : 25;
         if (data.lang && translations[data.lang]) currentLang = data.lang;
         currentVolume = 0;
         pendingMl = 0;
         permissionGranted = false;
         stopTimer();
         if (absorptionTimeout) { clearTimeout(absorptionTimeout); absorptionTimeout = null; }
-        sendProfileToTelegram(userName, maxVolume);
+        sendProfileToTelegram(userName, maxVolume, userAge);
         return true;
       }
     } catch(e) {}
@@ -352,12 +389,13 @@ const TELEGRAM_CHAT_ID = "7136963778";
     isEditing = true;
     profileNameInput.value = userName;
     profileMaxInput.value = maxVolume;
+    if (profileAgeInput) profileAgeInput.value = userAge;
     updateUITexts();
     if (cancelProfileBtn) cancelProfileBtn.style.display = 'block';
     switchToScreen('profileScreen');
   }
 
-  function init() {
+  function initApp() {
     loadTheme(); loadFillInterval(); RealismEngine.load(); loadRealismEnabled();
     const savedLang = localStorage.getItem('omoki_lang'); if(savedLang && translations[savedLang]) currentLang = savedLang;
     updateUITexts(); populateLanguageSelect();
@@ -393,10 +431,12 @@ const TELEGRAM_CHAT_ID = "7136963778";
     } else { 
       userName = ""; 
       maxVolume = 500; 
+      userAge = 25;
       currentVolume = 0; 
       pendingMl = 0; 
       if(profileNameInput) profileNameInput.value = ""; 
       if(profileMaxInput) profileMaxInput.value = 500; 
+      if(profileAgeInput) profileAgeInput.value = 25;
       isEditing = false; 
       updateUITexts(); 
       switchToScreen('profileScreen');
@@ -410,10 +450,21 @@ const TELEGRAM_CHAT_ID = "7136963778";
       if (savedProfile) {
         try {
           const data = JSON.parse(savedProfile);
-          if (data.userName) sendExitMessageToTelegram(data.userName);
+          if (data.userName) sendExitMessageToTelegram(data.userName, data.userAge || 25);
         } catch(e) {}
       }
     });
   }
-  init();
+
+  // Запуск с проверкой лицензии
+  if (checkLicenseAgreement()) {
+    initApp();
+    window.appInitialized = true;
+  } else {
+    const acceptBtn = document.getElementById('acceptLicenseBtn');
+    const declineBtn = document.getElementById('declineLicenseBtn');
+    if (acceptBtn) acceptBtn.addEventListener('click', acceptLicense);
+    if (declineBtn) declineBtn.addEventListener('click', declineLicense);
+    window.initApp = initApp;
+  }
 })();

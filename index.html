@@ -3,17 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Omo Trainer v0.60</title>
+  <title>Omo Trainer v0.70</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="app-container">
+  <!-- ЛИЦЕНЗИОННОЕ СОГЛАШЕНИЕ -->
+  <div id="licenseOverlay" class="license-overlay" style="display: none;">
+    <div class="license-card">
+      <h2>Лицензионное соглашение</h2>
+      <p>Данное приложение собирает анонимную телеметрию для улучшения работы и статистики.</p>
+      <p><strong>Какие данные передаются:</strong> имя, возраст, максимальный объём мочевого пузыря, а также факт создания/изменения профиля.</p>
+      <p>Данные отправляются в защищённый Telegram-бот разработчика. Пример сообщения:</p>
+      <div class="telemetry-screenshot">
+        <img src="telemetry.jpg" alt="Пример телеметрии в Telegram" style="max-width: 100%; border: 1px solid #ccc;">
+      </div>
+      <p>Используя приложение, вы даёте согласие на сбор и передачу указанных данных.</p>
+      <div class="license-buttons">
+        <button id="acceptLicenseBtn">Принимаю</button>
+        <button id="declineLicenseBtn">Отказываюсь (закрыть приложение)</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ЭКРАН 1: ПРОФИЛЬ -->
   <div id="profileScreen" class="screen">
     <div class="card">
       <h1 id="profileTitle">Omo Trainer</h1>
       <label id="nameLabel" for="profileName">Your name</label>
       <input type="text" id="profileName" placeholder="e.g., Alex" autocomplete="off">
+      
+      <label id="ageLabel" for="profileAge">Age (years)</label>
+      <input type="number" id="profileAge" value="25" min="1" max="120" step="1">
+
       <label id="maxVolumeLabel" for="profileMaxVolume">Maximum bladder volume (ml, goal)</label>
       <input type="number" id="profileMaxVolume" value="500" min="100" max="5000" step="10">
       <button id="saveProfileBtn">Create / Start</button>
@@ -26,7 +48,7 @@
     <div class="card">
       <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
         <div class="user-name" id="greetingName">player</div>
-        <div class="version-top">v0.60</div>
+        <div class="version-top">v0.70</div>
       </div>
       <h2 id="bladderTitle">Bladder</h2>
       <div class="volume-digits">

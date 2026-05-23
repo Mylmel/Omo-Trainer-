@@ -1,4 +1,4 @@
-// realism.js — v1.5 (добавлена техника дыхания)
+// realism.js — v1.6 (возраст влияет на физиологию)
 
 const RealismEngine = (function() {
   let params = {
@@ -13,6 +13,8 @@ const RealismEngine = (function() {
     menstrualCycle: false,
     breathingTechnique: false
   };
+
+  let breathingActiveUntil = 0;
 
   function load() {
     const saved = localStorage.getItem('omoki_realism_params');
@@ -32,6 +34,8 @@ const RealismEngine = (function() {
     let mod = 1.0;
     if (params.temperature === 'cold') mod *= 1.2;
     if (params.temperature === 'hot') mod *= 0.9;
+    if (params.age === 'young') mod *= 1.1;
+    if (params.age === 'elderly') mod *= 0.85;
     return mod;
   }
 
@@ -41,6 +45,7 @@ const RealismEngine = (function() {
     if (params.cystitis) threshold -= 0.2;
     if (params.pregnancy) threshold -= 0.15;
     if (params.lockedDoor && (currentVolume / maxVolume) > 0.6) threshold -= 0.1;
+    if (params.age === 'young') threshold += 0.05;
     if (params.age === 'elderly') threshold -= 0.1;
     return Math.min(0.95, Math.max(0.5, threshold));
   }
@@ -52,6 +57,8 @@ const RealismEngine = (function() {
     let baseChance = fillPercent > 0.9 ? 0.1 : (fillPercent > 0.8 ? 0.05 : 0.02);
     if (params.pregnancy) baseChance += 0.1;
     if (params.prostatitis && fillPercent > 0.75) baseChance += 0.08;
+    if (params.age === 'young') baseChance *= 0.7;
+    if (params.age === 'elderly') baseChance *= 1.4;
     return Math.min(0.6, baseChance);
   }
 
@@ -59,7 +66,8 @@ const RealismEngine = (function() {
     if (!params.enabled) return 0;
     let residual = 0;
     if (params.prostatitis) residual += 5 + Math.random() * 10;
-    if (params.age === 'elderly') residual += 5;
+    if (params.age === 'elderly') residual += 8;
+    if (params.age === 'young') residual = Math.max(0, residual - 3);
     if (params.cystitis) residual = Math.min(residual + 5, 20);
     return Math.min(residual, currentVolume);
   }
@@ -75,23 +83,46 @@ const RealismEngine = (function() {
 
   function getDiureticModifier(drinkType) {
     if (!params.enabled) return 1.0;
+    let modifier = 1.0;
     switch(drinkType) {
-      case 'coffee': return 1.4;
-      case 'tea': return 1.3;
-      case 'beer': return 1.5;
-      case 'soda': return 1.2;
-      default: return 1.0;
+      case 'coffee': modifier = 1.4; break;
+      case 'tea': modifier = 1.3; break;
+      case 'beer': modifier = 1.5; break;
+      case 'soda': modifier = 1.2; break;
+      default: modifier = 1.0;
     }
+    if (params.age === 'elderly') modifier *= 0.8;
+    if (params.age === 'young') modifier *= 1.05;
+    return modifier;
   }
 
-  function getAbsorptionDelayMultiplier() { return 1.0; }
+  function getAbsorptionDelayMultiplier() {
+    if (!params.enabled) return 1.0;
+    let delay = 1.0;
+    if (params.age === 'elderly') delay = 1.3;
+    if (params.age === 'young') delay = 0.9;
+    return delay;
+  }
 
   function getPerceivedVolume(currentVolume, maxVolume) {
     if (!params.enabled) return currentVolume;
     let perceived = currentVolume;
     if (params.waterSounds) perceived *= 1.1;
     if (params.menstrualCycle) perceived *= 1.05;
+    if (params.age === 'elderly') perceived *= 0.95;
     return Math.min(maxVolume * 1.5, perceived);
+  }
+
+  function isBreathingActive() {
+    return Date.now() < breathingActiveUntil;
+  }
+
+  function getBreathingReduction() {
+    if (!isBreathingActive()) return 1.0;
+    let reduction = 0.85;
+    if (params.age === 'elderly') reduction = 0.95;
+    if (params.age === 'young') reduction = 0.8;
+    return reduction;
   }
 
   function getUrgencyStatus(currentVolume, maxVolume) {
@@ -104,8 +135,11 @@ const RealismEngine = (function() {
       if (p >= 0.35) return 'moderate';
       return 'calm';
     }
-    const perceived = getPerceivedVolume(currentVolume, maxVolume);
-    const ratio = perceived / maxVolume;
+    let perceived = getPerceivedVolume(currentVolume, maxVolume);
+    if (isBreathingActive()) perceived *= getBreathingReduction();
+    let ratio = perceived / maxVolume;
+    if (params.age === 'young') ratio *= 0.9;
+    if (params.age === 'elderly') ratio *= 1.1;
     if (ratio >= 1.3 || (params.cystitis && currentVolume > 120)) return 'critical';
     if (ratio >= 1.0) return 'overflow';
     if (ratio >= 0.75) return 'urgent';
@@ -116,6 +150,12 @@ const RealismEngine = (function() {
 
   function activateBreathing() {
     if (!isBreathingEnabled()) return false;
+    const now = Date.now();
+    if (now < breathingActiveUntil) return false;
+    let duration = 30000;
+    if (params.age === 'elderly') duration = 15000;
+    if (params.age === 'young') duration = 45000;
+    breathingActiveUntil = now + duration;
     return true;
   }
 
@@ -167,7 +207,7 @@ const RealismEngine = (function() {
     getFillRateModifier, getPermissionThreshold, getLeakProbability,
     getPostVoidResidual, schedulePostMicturitionDribble,
     getDiureticModifier, getAbsorptionDelayMultiplier,
-    getUrgencyStatus, activateBreathing,
+    getUrgencyStatus, activateBreathing, isBreathingActive,
     bindUI, collectFromUI,
     isEnabled: () => params.enabled
   };
